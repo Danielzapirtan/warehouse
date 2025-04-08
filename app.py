@@ -1,15 +1,3 @@
-
-# Install Gradio in Colab
-!pip install gradio
-
-# Paste the warehouse.py code here (assuming it's available in the environment)
-# For this example, I'll assume the code you provided is already in the notebook
-
-%cd /content
-!rm -rf warehouse
-!apt install git
-!git clone https://github.com/Danielzapirtan/warehouse.git
-%cd warehouse
 from warehouse import DATABASE, PRODUCT, SHEET, PAGE, RECORD
 
 import gradio as gr

@@ -1,4 +1,5 @@
 import gradio as gr
+from warehouse import DATABASE, PRODUCT, SHEET, PAGE, RECORD
 
 # Global database instance (assuming db is initialized as in your code)
 db = DATABASE()

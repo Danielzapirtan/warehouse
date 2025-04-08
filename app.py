@@ -132,7 +132,7 @@ def delete_product(product_name):
 
 # CRUD Operations for Sheet
 def create_sheet(product_name, year, month):
-    product = next((p for p in db.products if p.name == product_name), None)
+    product = first((p for p in db.products if p.name == product_name), None)
     if product:
         product.create_sheet(year, month)
     return save_db(), gr.update(choices=get_sheet_list(product_name))

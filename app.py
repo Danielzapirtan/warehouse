@@ -8,7 +8,7 @@ DB_FILE = "warehouse_db.json"
 db = DATABASE()
 db.init()
 
-# Persistence functions (unchanged)
+# Persistence functions
 def save_db():
     data = {
         "products": [{
@@ -49,7 +49,7 @@ def load_db():
                     product.create_sheet(s_data["year"], s_data["month"])
                     sheet = product.sheets[-1]
                     for p_data in s_data["pages"]:
-                        sheet.create_page(p_data["price"], 0)
+                        sheet.create_page(p_data["price"], 0)  # sold_init not stored, using 0
                         page = sheet.pages[-1]
                         page.sold_final = p_data["sold_final"]
                         for r_data in p_data["records"]:
@@ -63,7 +63,7 @@ def load_db():
                             )
     return display_db_state()
 
-# Helper function to display current database state (unchanged)
+# Helper function to display current database state
 def display_db_state():
     output = "Warehouse Database:\n"
     for i, product in enumerate(db.products):
@@ -76,7 +76,7 @@ def display_db_state():
                     output += f"      Record {m}: In={record.input}, Out={record.output}, Sold=${record.sold_final}, Doc={record.doc_id}\n"
     return output if db.products else "Database is empty."
 
-# Dropdown list generators (unchanged)
+# Dropdown list generators
 def get_product_list():
     return [p.name for p in db.products] if db.products else ["No products"]
 
@@ -111,29 +111,26 @@ def get_record_list(product_name, sheet_name, page_name):
         return ["No records"]
     return [f"Record {i}" for i in range(len(product.sheets[sheet_idx].pages[page_idx].records))] if product.sheets[sheet_idx].pages[page_idx].records else ["No records"]
 
-# CRUD Operations for Product (updated to return all product dropdowns)
+# CRUD Operations for Product
 def create_product(name, unit):
     db.create_product(name, unit)
-    product_update = gr.update(choices=get_product_list())
-    return save_db(), product_update, product_update, product_update, product_update
+    return save_db(), gr.update(choices=get_product_list())
 
 def update_product(product_name, new_name, unit):
     product = next((p for p in db.products if p.name == product_name), None)
     if product:
         product.name = new_name
         product.unit = unit
-    product_update = gr.update(choices=get_product_list())
-    return save_db(), product_update, product_update, product_update, product_update
+    return save_db(), gr.update(choices=get_product_list())
 
 def delete_product(product_name):
     product_idx = next((i for i, p in enumerate(db.products) if p.name == product_name), -1)
     if product_idx != -1:
         db.products.pop(product_idx)
         db.maxproduct -= 1
-    product_update = gr.update(choices=get_product_list())
-    return save_db(), product_update, product_update, product_update, product_update
+    return save_db(), gr.update(choices=get_product_list())
 
-# CRUD Operations for Sheet (unchanged except for outputs)
+# CRUD Operations for Sheet
 def create_sheet(product_name, year, month):
     product = next((p for p in db.products if p.name == product_name), None)
     if product:
@@ -159,7 +156,7 @@ def delete_sheet(product_name, sheet_name):
             product.maxsheet -= 1
     return save_db(), gr.update(choices=get_sheet_list(product_name))
 
-# CRUD Operations for Page (unchanged except for outputs)
+# CRUD Operations for Page
 def create_page(product_name, sheet_name, price, sold_final):
     product = next((p for p in db.products if p.name == product_name), None)
     if product:
@@ -191,7 +188,7 @@ def delete_page(product_name, sheet_name, page_name):
                 product.sheets[sheet_idx].maxpage -= 1
     return save_db(), gr.update(choices=get_page_list(product_name, sheet_name))
 
-# CRUD Operations for Record (unchanged except for outputs)
+# CRUD Operations for Record
 def create_record(product_name, sheet_name, page_name, input_, output_, sold_final, doc_id, doc_type, dom):
     product = next((p for p in db.products if p.name == product_name), None)
     if product:
@@ -232,7 +229,7 @@ def delete_record(product_name, sheet_name, page_name, record_name):
                     product.sheets[sheet_idx].pages[page_idx].records.pop(record_idx)
     return save_db(), gr.update(choices=get_record_list(product_name, sheet_name, page_name))
 
-# Gradio Interface (updated to handle all product dropdowns)
+# Gradio Interface
 with gr.Blocks(title="Warehouse Management") as demo:
     gr.Markdown("# Warehouse Management System")
     output_text = gr.Textbox(label="Database State", lines=10, interactive=False)
@@ -246,21 +243,9 @@ with gr.Blocks(title="Warehouse Management") as demo:
             create_btn = gr.Button("Create")
             update_btn = gr.Button("Update")
             delete_btn = gr.Button("Delete")
-        create_btn.click(
-            fn=create_product,
-            inputs=[name_input, unit_input],
-            outputs=[output_text, product_dropdown, "product_dropdown_sheet", "product_dropdown_page", "product_dropdown_rec"]
-        )
-        update_btn.click(
-            fn=update_product,
-            inputs=[product_dropdown, name_input, unit_input],
-            outputs=[output_text, product_dropdown, "product_dropdown_sheet", "product_dropdown_page", "product_dropdown_rec"]
-        )
-        delete_btn.click(
-            fn=delete_product,
-            inputs=[product_dropdown],
-            outputs=[output_text, product_dropdown, "product_dropdown_sheet", "product_dropdown_page", "product_dropdown_rec"]
-        )
+        create_btn.click(fn=create_product, inputs=[name_input, unit_input], outputs=[output_text, product_dropdown])
+        update_btn.click(fn=update_product, inputs=[product_dropdown, name_input, unit_input], outputs=[output_text, product_dropdown])
+        delete_btn.click(fn=delete_product, inputs=[product_dropdown], outputs=[output_text, product_dropdown])
 
     with gr.Tab("Sheet"):
         product_dropdown_sheet = gr.Dropdown(label="Select Product", choices=get_product_list())

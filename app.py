@@ -137,7 +137,7 @@ def create_sheet(product_name, year, month):
         if p.name == product_name:
             product = p
             break
-    if product:
+    if product != None:
         product.create_sheet(year, month)
     return save_db(), gr.update(choices=get_sheet_list(product_name))
 

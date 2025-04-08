@@ -12,25 +12,25 @@ db.init()
 def save_db():
     data = {
         "products": [{
-            "name": p.name,
-            "unit": p.unit,
+            "name": prod.name,
+            "unit": prod.unit,
             "sheets": [{
-                "year": s.year,
-                "month": s.month,
+                "year": sheet.year,
+                "month": sheet.month,
                 "pages": [{
-                    "price": p.price,
-                    "sold_final": p.sold_final,
+                    "price": page.price,
+                    "sold_final": page.sold_final,
                     "records": [{
-                        "input": r.input,
-                        "output": r.output,
-                        "sold_final": r.sold_final,
-                        "doc_id": r.doc_id,
-                        "doc_type": r.doc_type,
-                        "dom": r.dom
-                    } for r in page.records]
-                } for p in s.pages]
-            } for s in p.sheets]
-        } for p in db.products]
+                        "input": rec.input,
+                        "output": rec.output,
+                        "sold_final": rec.sold_final,
+                        "doc_id": rec.doc_id,
+                        "doc_type": rec.doc_type,
+                        "dom": rec.dom
+                    } for rec in page.records]
+                } for page in sheet.pages]
+            } for sheet in prod.sheets]
+        } for prod in db.products]
     }
     with open(DB_FILE, 'w') as f:
         json.dump(data, f)
@@ -42,24 +42,24 @@ def load_db():
             data = json.load(f)
             db.products.clear()
             db.maxproduct = 0
-            for p_data in data["products"]:
-                db.create_product(p_data["name"], p_data["unit"])
+            for prod_data in data["products"]:
+                db.create_product(prod_data["name"], prod_data["unit"])
                 product = db.products[-1]
-                for s_data in p_data["sheets"]:
-                    product.create_sheet(s_data["year"], s_data["month"])
+                for sheet_data in prod_data["sheets"]:
+                    product.create_sheet(sheet_data["year"], sheet_data["month"])
                     sheet = product.sheets[-1]
-                    for p_data in s_data["pages"]:
-                        sheet.create_page(p_data["price"], 0)  # sold_init not stored, using 0
+                    for page_data in sheet_data["pages"]:
+                        sheet.create_page(page_data["price"], 0)  # sold_init not stored, using 0
                         page = sheet.pages[-1]
-                        page.sold_final = p_data["sold_final"]
-                        for r_data in p_data["records"]:
+                        page.sold_final = page_data["sold_final"]
+                        for rec_data in page_data["records"]:
                             page.create_record(
-                                r_data["input"],
-                                r_data["output"],
-                                r_data["sold_final"],
-                                r_data["doc_id"],
-                                r_data["doc_type"],
-                                r_data["dom"]
+                                rec_data["input"],
+                                rec_data["output"],
+                                rec_data["sold_final"],
+                                rec_data["doc_id"],
+                                rec_data["doc_type"],
+                                rec_data["dom"]
                             )
     return display_db_state()
 
@@ -229,6 +229,15 @@ def delete_record(product_name, sheet_name, page_name, record_name):
                     product.sheets[sheet_idx].pages[page_idx].records.pop(record_idx)
     return save_db(), gr.update(choices=get_record_list(product_name, sheet_name, page_name))
 
+# Update dependent dropdowns function
+def update_all_dropdowns(product_name):
+    sheet_list = get_sheet_list(product_name)
+    sheet_name = sheet_list[0] if sheet_list else "No sheets"
+    page_list = get_page_list(product_name, sheet_name)
+    page_name = page_list[0] if page_list else "No pages"
+    record_list = get_record_list(product_name, sheet_name, page_name)
+    return gr.update(choices=sheet_list, value=sheet_name), gr.update(choices=page_list, value=page_name), gr.update(choices=record_list, value=record_list[0] if record_list else "No records")
+
 # Gradio Interface
 with gr.Blocks(title="Warehouse Management") as demo:
     gr.Markdown("# Warehouse Management System")
@@ -246,6 +255,13 @@ with gr.Blocks(title="Warehouse Management") as demo:
         create_btn.click(fn=create_product, inputs=[name_input, unit_input], outputs=[output_text, product_dropdown])
         update_btn.click(fn=update_product, inputs=[product_dropdown, name_input, unit_input], outputs=[output_text, product_dropdown])
         delete_btn.click(fn=delete_product, inputs=[product_dropdown], outputs=[output_text, product_dropdown])
+        # Auto-fill fields when product is selected
+        product_dropdown.change(
+            fn=lambda p: [next((prod.name for prod in db.products if prod.name == p), ""), 
+                          next((prod.unit for prod in db.products if prod.name == p), "")],
+            inputs=product_dropdown,
+            outputs=[name_input, unit_input]
+        )
 
     with gr.Tab("Sheet"):
         product_dropdown_sheet = gr.Dropdown(label="Select Product", choices=get_product_list())
@@ -258,6 +274,13 @@ with gr.Blocks(title="Warehouse Management") as demo:
             update_sheet_btn = gr.Button("Update")
             delete_sheet_btn = gr.Button("Delete")
         product_dropdown_sheet.change(fn=get_sheet_list, inputs=product_dropdown_sheet, outputs=sheet_dropdown)
+        # Auto-fill fields when sheet is selected
+        sheet_dropdown.change(
+            fn=lambda p, s: [int(s.split('-')[0]) if s != "No sheets" else 2025, 
+                            int(s.split('-')[1]) if s != "No sheets" else 4],
+            inputs=[product_dropdown_sheet, sheet_dropdown],
+            outputs=[year_input, month_input]
+        )
         create_sheet_btn.click(fn=create_sheet, inputs=[product_dropdown_sheet, year_input, month_input], outputs=[output_text, sheet_dropdown])
         update_sheet_btn.click(fn=update_sheet, inputs=[product_dropdown_sheet, sheet_dropdown, year_input, month_input], outputs=[output_text, sheet_dropdown])
         delete_sheet_btn.click(fn=delete_sheet, inputs=[product_dropdown_sheet, sheet_dropdown], outputs=[output_text, sheet_dropdown])
@@ -275,6 +298,20 @@ with gr.Blocks(title="Warehouse Management") as demo:
             delete_page_btn = gr.Button("Delete")
         product_dropdown_page.change(fn=get_sheet_list, inputs=product_dropdown_page, outputs=sheet_dropdown_page)
         sheet_dropdown_page.change(fn=lambda p, s: get_page_list(p, s), inputs=[product_dropdown_page, sheet_dropdown_page], outputs=page_dropdown)
+        # Auto-fill fields when page is selected
+        page_dropdown.change(
+            fn=lambda p, s, pg: (
+                [next((page.price for page in next((sheet for sheet in next((prod for prod in db.products if prod.name == p), None).sheets 
+                                                  if f"{sheet.year}-{sheet.month:02d}" == s), None).pages 
+                         if f"Page {i}" == pg), 0.0),
+                 next((page.sold_final for page in next((sheet for sheet in next((prod for prod in db.products if prod.name == p), None).sheets 
+                                                       if f"{sheet.year}-{sheet.month:02d}" == s), None).pages 
+                         if f"Page {i}" == pg), 0.0)]
+                if p != "No products" and s != "No sheets" and pg != "No pages" else [0.0, 0.0]
+            ),
+            inputs=[product_dropdown_page, sheet_dropdown_page, page_dropdown],
+            outputs=[price_input, sold_final_input]
+        )
         create_page_btn.click(fn=create_page, inputs=[product_dropdown_page, sheet_dropdown_page, price_input, sold_final_input], outputs=[output_text, page_dropdown])
         update_page_btn.click(fn=update_page, inputs=[product_dropdown_page, sheet_dropdown_page, page_dropdown, price_input, sold_final_input], outputs=[output_text, page_dropdown])
         delete_page_btn.click(fn=delete_page, inputs=[product_dropdown_page, sheet_dropdown_page, page_dropdown], outputs=[output_text, page_dropdown])
@@ -299,6 +336,40 @@ with gr.Blocks(title="Warehouse Management") as demo:
         product_dropdown_rec.change(fn=get_sheet_list, inputs=product_dropdown_rec, outputs=sheet_dropdown_rec)
         sheet_dropdown_rec.change(fn=lambda p, s: get_page_list(p, s), inputs=[product_dropdown_rec, sheet_dropdown_rec], outputs=page_dropdown_rec)
         page_dropdown_rec.change(fn=lambda p, s, pg: get_record_list(p, s, pg), inputs=[product_dropdown_rec, sheet_dropdown_rec, page_dropdown_rec], outputs=record_dropdown)
+        
+        # Auto-fill fields when record is selected
+        def get_record_fields(p, s, pg, r):
+            if p == "No products" or s == "No sheets" or pg == "No pages" or r == "No records":
+                return 0.0, 0.0, 0.0, "", "", 0
+            
+            try:
+                product = next((prod for prod in db.products if prod.name == p), None)
+                if not product:
+                    return 0.0, 0.0, 0.0, "", "", 0
+                    
+                sheet_idx = next((i for i, sheet in enumerate(product.sheets) if f"{sheet.year}-{sheet.month:02d}" == s), -1)
+                if sheet_idx == -1:
+                    return 0.0, 0.0, 0.0, "", "", 0
+                    
+                page_idx = int(pg.split()[-1]) if pg != "No pages" else -1
+                if page_idx < 0 or page_idx >= len(product.sheets[sheet_idx].pages):
+                    return 0.0, 0.0, 0.0, "", "", 0
+                    
+                record_idx = int(r.split()[-1]) if r != "No records" else -1
+                if record_idx < 0 or record_idx >= len(product.sheets[sheet_idx].pages[page_idx].records):
+                    return 0.0, 0.0, 0.0, "", "", 0
+                    
+                record = product.sheets[sheet_idx].pages[page_idx].records[record_idx]
+                return record.input, record.output, record.sold_final, record.doc_id, record.doc_type, record.dom
+            except Exception:
+                return 0.0, 0.0, 0.0, "", "", 0
+        
+        record_dropdown.change(
+            fn=get_record_fields,
+            inputs=[product_dropdown_rec, sheet_dropdown_rec, page_dropdown_rec, record_dropdown],
+            outputs=[input_rec, output_rec, sold_final_rec, doc_id_rec, doc_type_rec, dom_rec]
+        )
+        
         create_record_btn.click(fn=create_record, inputs=[product_dropdown_rec, sheet_dropdown_rec, page_dropdown_rec, input_rec, output_rec, sold_final_rec, doc_id_rec, doc_type_rec, dom_rec], outputs=[output_text, record_dropdown])
         update_record_btn.click(fn=update_record, inputs=[product_dropdown_rec, sheet_dropdown_rec, page_dropdown_rec, record_dropdown, input_rec, output_rec, sold_final_rec, doc_id_rec, doc_type_rec, dom_rec], outputs=[output_text, record_dropdown])
         delete_record_btn.click(fn=delete_record, inputs=[product_dropdown_rec, sheet_dropdown_rec, page_dropdown_rec, record_dropdown], outputs=[output_text, record_dropdown])

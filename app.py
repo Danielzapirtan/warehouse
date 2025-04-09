@@ -8,6 +8,10 @@ db.init()
 # Helper function to display current database state
 def display_db_state():
     output = "Current Database State:\n"
+    current_product = db.crtproduct
+    current_sheet = db.products[current_product].crtsheet
+    current_page = db.products[current_product].sheets[current_sheet].crtpage
+    output += f"{current_product} / {current_sheet} / {current_page}\n"
     for i, product in enumerate(db.products):
         output += f"Product {i}: {product.name} ({product.unit})\n"
         for j, sheet in enumerate(product.sheets):

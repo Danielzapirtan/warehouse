@@ -1,3 +1,5 @@
+from os import system
+system('pip3 install pytest gradio')
 import pytest, gradio
 from app import db, display_db_state, create_product
 

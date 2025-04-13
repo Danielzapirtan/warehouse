@@ -24,44 +24,44 @@ def create_product(name:str, unit:str)->str:
     db.create_product(name, unit)
     return display_db_state()
 
-def update_product(index, name, unit):
+def update_product(index:int, name:str, unit:str)->str:
     if 0 <= index < db.maxproduct:
         db.products[index].name = name
         db.products[index].unit = unit
     return display_db_state()
 
-def delete_product(index):
+def delete_product(index:int)->str:
     if 0 <= index < db.maxproduct:
         db.products.pop(index)
         db.maxproduct -= 1
     return display_db_state()
 
 # CRUD Operations for Sheet
-def create_sheet(product_index, year, month):
+def create_sheet(product_index:int, year:int, month:int)->str:
     if 0 <= product_index < db.maxproduct:
         db.products[product_index].create_sheet(year, month)
     return display_db_state()
 
-def update_sheet(product_index, sheet_index, year, month):
+def update_sheet(product_index:int, sheet_index:int, year:int, month:int)->str:
     if 0 <= product_index < db.maxproduct and 0 <= sheet_index < db.products[product_index].maxsheet:
         sheet = db.products[product_index].sheets[sheet_index]
         sheet.year = year
         sheet.month = month
     return display_db_state()
 
-def delete_sheet(product_index, sheet_index):
+def delete_sheet(product_index:int, sheet_index:int)->str:
     if 0 <= product_index < db.maxproduct and 0 <= sheet_index < db.products[product_index].maxsheet:
         db.products[product_index].sheets.pop(sheet_index)
         db.products[product_index].maxsheet -= 1
     return display_db_state()
 
 # CRUD Operations for Page
-def create_page(product_index, sheet_index, price, sold_init):
+def create_page(product_index:int, sheet_index:int, price:float, sold_init:float)->str:
     if 0 <= product_index < db.maxproduct and 0 <= sheet_index < db.products[product_index].maxsheet:
         db.products[product_index].sheets[sheet_index].create_page(price, sold_init)
     return display_db_state()
 
-def update_page(product_index, sheet_index, page_index, price, sold_final):
+def update_page(product_index:int, sheet_index:int, page_index:int, price:float, sold_final:float)->str:
     if (0 <= product_index < db.maxproduct and 
         0 <= sheet_index < db.products[product_index].maxsheet and 
         0 <= page_index < db.products[product_index].sheets[sheet_index].maxpage):
@@ -70,7 +70,7 @@ def update_page(product_index, sheet_index, page_index, price, sold_final):
         page.sold_final = sold_final
     return display_db_state()
 
-def delete_page(product_index, sheet_index, page_index):
+def delete_page(product_index:int, sheet_index:int, page_index:int)->str:
     if (0 <= product_index < db.maxproduct and 
         0 <= sheet_index < db.products[product_index].maxsheet and 
         0 <= page_index < db.products[product_index].sheets[sheet_index].maxpage):
@@ -79,7 +79,7 @@ def delete_page(product_index, sheet_index, page_index):
     return display_db_state()
 
 # CRUD Operations for Record
-def create_record(product_index, sheet_index, page_index, input_, output_, sold_init_, doc_id, doc_type, dom):
+def create_record(product_index:int, sheet_index:int, page_index:int, input_:float, output_:float, sold_init_:float, doc_id:int, doc_type:str, dom:int)->str:
     if (0 <= product_index < db.maxproduct and
         0 <= sheet_index < db.products[product_index].maxsheet and
         0 <= page_index < db.products[product_index].sheets[sheet_index].maxpage):
@@ -87,7 +87,7 @@ def create_record(product_index, sheet_index, page_index, input_, output_, sold_
             input_, output_, sold_init_, doc_id, doc_type, dom)
     return display_db_state()
 
-def update_record(product_index, sheet_index, page_index, record_index, input_, output_, sold_final, doc_id, doc_type, dom):
+def update_record(product_index:int, sheet_index:int, page_index:int, record_index:int, input_:float, output_:float, sold_final:float, doc_id:int, doc_type:str, dom:int)->str:
     if (0 <= product_index < db.maxproduct and
         0 <= sheet_index < db.products[product_index].maxsheet and
         0 <= page_index < db.products[product_index].sheets[sheet_index].maxpage and
@@ -101,7 +101,7 @@ def update_record(product_index, sheet_index, page_index, record_index, input_, 
         record.dom = dom
     return display_db_state()
 
-def delete_record(product_index, sheet_index, page_index, record_index):
+def delete_record(product_index:int, sheet_index:int, page_index:int, record_index:int)->str:
     if (0 <= product_index < db.maxproduct and
         0 <= sheet_index < db.products[product_index].maxsheet and
         0 <= page_index < db.products[product_index].sheets[sheet_index].maxpage and

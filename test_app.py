@@ -1,4 +1,4 @@
-import pytest
+import pytest, gradio
 from app import db, display_db_state, create_product
 
 def test_empty_database():

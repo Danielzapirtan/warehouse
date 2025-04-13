@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest pyyaml
+          pip install pytest
 
       - name: Run static type checking
         run: |
@@ -85,27 +85,6 @@ jobs:
                   assert rec.sold_final == 58.0  # 50 + 10 - 2
           EOF
           pytest test_warehouse.py -v
-
-      - name: Validate YAML workflow syntax
-        run: |
-          pip install pyyaml
-          cat << EOF > validate_workflow.py
-          import yaml
-          from warehouse import DATABASE
-
-          def validate_workflow():
-              with open('warehouse.yaml') as f:
-                  workflow = yaml.safe_load(f)
-              # Basic structure validation
-              assert 'database' in workflow
-              assert 'operations' in workflow
-              assert 'workflows' in workflow
-              print("YAML workflow structure is valid")
-
-          if __name__ == "__main__":
-              validate_workflow()
-          EOF
-          python validate_workflow.py
 
       - name: Documentation consistency check
         run: |

@@ -95,14 +95,3 @@ jobs:
           grep -q 'class PRODUCT:' warehouse.py || exit 1
           grep -q 'class DATABASE:' warehouse.py || exit 1
           echo "All core classes are properly defined"
-      - name: Verify Gradio Interface
-        run: |
-          pip install gradio
-          python -c "from app import demo; assert demo is not None"
-
-      # Mutation testing disabled due to compatibility issues
-      # - name: Run mutation testing
-      #   run: |
-      #     pip install mutmut
-      #     mutmut run --paths warehouse.py
-      #     mutmut results

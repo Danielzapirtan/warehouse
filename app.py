@@ -20,7 +20,7 @@ def display_db_state():
     return output if db.products else "Database is empty."
 
 # CRUD Operations for Product
-def create_product(name, unit):
+def create_product(name:str, unit:str)->str:
     db.create_product(name, unit)
     return display_db_state()
 

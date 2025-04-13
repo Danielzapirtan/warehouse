@@ -1,0 +1,124 @@
+name: Warehouse Database Consistency Checks
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  consistency-checks:
+    runs-on: ubuntu-latest
+    name: Validate warehouse database consistency
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pyyaml
+
+      - name: Run static type checking
+        run: |
+          pip install mypy
+          mypy warehouse.py --strict
+
+      - name: Run unit tests
+        run: |
+          cat << EOF > test_warehouse.py
+          import pytest
+          from warehouse import RECORD, PAGE, SHEET, PRODUCT, DATABASE, db
+
+          class TestWarehouseConsistency:
+              def test_record_consistency(self):
+                  record = RECORD().init(10.0, 5.0, 0.0, 100.0, "DOC001", "INVOICE", 15)
+                  assert record.sold_final == 105.0  # 100 + 10 - 5
+                  assert isinstance(record.dom, int)
+                  assert isinstance(record.doc_id, str)
+
+              def test_page_consistency(self):
+                  page = PAGE().init(9.99, 100.0)
+                  record1 = page.create_record(10.0, 5.0, 100.0, "DOC001", "INVOICE", 15)
+                  assert page.sold_final == 105.0
+                  record2 = page.create_record(20.0, 10.0, 0.0, "DOC002", "RECEIPT", 16)
+                  assert page.sold_final == 115.0  # 105 + 20 - 10
+                  assert len(page.records) == 2
+
+              def test_sheet_consistency(self):
+                  sheet = SHEET().init(2025, 4)
+                  page1 = sheet.create_page(9.99, 100.0)
+                  page2 = sheet.create_page(10.99, 200.0)
+                  assert sheet.year == 2025
+                  assert sheet.month == 4
+                  assert len(sheet.pages) == 2
+
+              def test_product_consistency(self):
+                  product = PRODUCT().init("Widget", "pcs")
+                  sheet1 = product.create_sheet(2025, 3)
+                  sheet2 = product.create_sheet(2025, 4)
+                  assert product.name == "Widget"
+                  assert product.unit == "pcs"
+                  assert len(product.sheets) == 2
+
+              def test_database_consistency(self):
+                  test_db = DATABASE().init()
+                  p1 = test_db.create_product("Widget", "pcs")
+                  p2 = test_db.create_product("Gadget", "units")
+                  assert len(test_db.products) == 2
+                  assert test_db.products[0].name == "Widget"
+                  assert test_db.products[1].unit == "units"
+
+              def test_integration_consistency(self):
+                  # Test the global db instance
+                  assert isinstance(db, DATABASE)
+                  p = db.create_product("Test", "items")
+                  s = p.create_sheet(2025, 4)
+                  pg = s.create_page(5.99, 50.0)
+                  rec = pg.create_record(10.0, 2.0, 0.0, "TEST001", "TEST", 1)
+                  assert rec.sold_final == 58.0  # 50 + 10 - 2
+          EOF
+          pytest test_warehouse.py -v
+
+      - name: Validate YAML workflow syntax
+        run: |
+          pip install pyyaml
+          cat << EOF > validate_workflow.py
+          import yaml
+          from warehouse import DATABASE
+
+          def validate_workflow():
+              with open('warehouse.yaml') as f:
+                  workflow = yaml.safe_load(f)
+              # Basic structure validation
+              assert 'database' in workflow
+              assert 'operations' in workflow
+              assert 'workflows' in workflow
+              print("YAML workflow structure is valid")
+
+          if __name__ == "__main__":
+              validate_workflow()
+          EOF
+          python validate_workflow.py
+
+      - name: Documentation consistency check
+        run: |
+          # Check if all classes are properly documented
+          grep -q 'class RECORD:' warehouse.py || exit 1
+          grep -q 'class PAGE:' warehouse.py || exit 1
+          grep -q 'class SHEET:' warehouse.py || exit 1
+          grep -q 'class PRODUCT:' warehouse.py || exit 1
+          grep -q 'class DATABASE:' warehouse.py || exit 1
+          echo "All core classes are properly defined"
+
+      - name: Run mutation testing (basic)
+        run: |
+          pip install mutmut
+          mutmut run --paths-to-mutate warehouse.py --runner "python -m pytest test_warehouse.py"
+          mutmut results

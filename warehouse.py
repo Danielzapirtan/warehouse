@@ -53,8 +53,8 @@ class PAGE:
     def create_record(self, input_: float, output_: float, sold_init_: float,
                     doc_id_: str, doc_type_: str, dom_: int) -> RECORD:
         new_record = RECORD()
-        # Use current sold_final as the new record's sold_init if there are existing records
-        current_sold_init = self.sold_final if self.maxrecord > 0 else sold_init_
+        # For the first record, use the page's sold_init, otherwise use the previous record's sold_final
+        current_sold_init = self.sold_init if self.maxrecord == 0 else self.sold_final
         new_record.init(input_, output_, 0, current_sold_init, doc_id_, doc_type_, dom_)
         return self.add_record(new_record)
 

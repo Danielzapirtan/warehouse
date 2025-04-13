@@ -1,6 +1,5 @@
 from typing import Optional, List
 
-# Database implementation with improvements
 class RECORD:
     def __init__(self) -> None:
         self.input: float = 0.0
@@ -16,7 +15,6 @@ class RECORD:
              sold_init_: float, doc_id_: str, doc_type_: str, dom_: int) -> 'RECORD':
         self.input = float(input_)
         self.output = float(output_)
-        self.sold_final = float(sold_final_)
         self.sold_init = float(sold_init_)
         self.doc_id = doc_id_
         self.doc_type = doc_type_
@@ -32,7 +30,7 @@ class PAGE:
         self.sold_final: float = 0.0
         self.crtrecord: int = 0
         self.maxrecord: int = 0
-        self.records: List[RECORD] = []  # Using dynamic list instead of fixed array
+        self.records: List[RECORD] = []
         self.sheet: Optional['SHEET'] = None
 
     def init(self, price_: float, sold_init_: float) -> 'PAGE':
@@ -72,7 +70,7 @@ class SHEET:
         self.month: int = 1
         self.crtpage: int = 0
         self.maxpage: int = 0
-        self.pages: List[PAGE] = []  # Using dynamic list instead of fixed array
+        self.pages: List[PAGE] = []
         self.product: Optional['PRODUCT'] = None
 
     def init(self, year_: int = 2025, month_: int = 1) -> 'SHEET':
@@ -103,7 +101,7 @@ class PRODUCT:
         self.unit: str = ""
         self.crtsheet: int = 0
         self.maxsheet: int = 0
-        self.sheets: List[SHEET] = []  # Using dynamic list instead of fixed array
+        self.sheets: List[SHEET] = []
         self.database: Optional['DATABASE'] = None
 
     def init(self, name_: str, unit_: str) -> 'PRODUCT':
@@ -132,7 +130,7 @@ class DATABASE:
     def __init__(self) -> None:
         self.crtproduct: int = 0
         self.maxproduct: int = 0
-        self.products: List[PRODUCT] = []  # Using dynamic list instead of fixed array
+        self.products: List[PRODUCT] = []
 
     def init(self) -> 'DATABASE':
         self.crtproduct = 0

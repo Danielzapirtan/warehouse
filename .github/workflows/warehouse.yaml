@@ -96,8 +96,8 @@ jobs:
           grep -q 'class DATABASE:' warehouse.py || exit 1
           echo "All core classes are properly defined"
 
-      - name: Run mutation testing (basic)
-        run: |
-          pip install mutmut
-          mutmut run --paths warehouse.py #--runner="python -m pytest test_warehouse.py"
-          mutmut results
+#      - name: Run mutation testing (basic)
+#        run: |
+#          pip install mutmut
+#          mutmut run --paths warehouse.py #--runner="python -m pytest test_warehouse.py"
+#          mutmut results

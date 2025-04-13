@@ -1,3 +1,4 @@
+from typing import Optional, Union
 from warehouse import DATABASE, PRODUCT, SHEET, PAGE, RECORD
 import gradio as gr
 

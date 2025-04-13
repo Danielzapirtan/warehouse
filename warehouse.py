@@ -1,17 +1,19 @@
+from typing import Optional, List
+
 # Database implementation with improvements
 class RECORD:
-    def __init__(self):
-        self.input = 0.0
-        self.output = 0.0
-        self.sold_final = 0.0
-        self.sold_init = 0.0
-        self.doc_id = ''
-        self.doc_type = ''
-        self.dom = 0
-        self.page = None
+    def __init__(self) -> None:
+        self.input: float = 0.0
+        self.output: float = 0.0
+        self.sold_final: float = 0.0
+        self.sold_init: float = 0.0
+        self.doc_id: str = ''
+        self.doc_type: str = ''
+        self.dom: int = 0
+        self.page: Optional['PAGE'] = None
 
-    def init(self, input_, output_, sold_final_, sold_init_, doc_id_, doc_type_, dom_):
-        # Fixed tuple assignment bug by removing commas
+    def init(self, input_: float, output_: float, sold_final_: float, 
+             sold_init_: float, doc_id_: str, doc_type_: str, dom_: int) -> 'RECORD':
         self.input = float(input_)
         self.output = float(output_)
         self.sold_final = float(sold_final_)
@@ -24,16 +26,16 @@ class RECORD:
         return self
 
 class PAGE:
-    def __init__(self):
-        self.price = 0.0
-        self.sold_init = 0.0
-        self.sold_final = 0.0
-        self.crtrecord = 0
-        self.maxrecord = 0
-        self.records = []  # Using dynamic list instead of fixed array
-        self.sheet = None
+    def __init__(self) -> None:
+        self.price: float = 0.0
+        self.sold_init: float = 0.0
+        self.sold_final: float = 0.0
+        self.crtrecord: int = 0
+        self.maxrecord: int = 0
+        self.records: List[RECORD] = []  # Using dynamic list instead of fixed array
+        self.sheet: Optional['SHEET'] = None
 
-    def init(self, price_, sold_init_):
+    def init(self, price_: float, sold_init_: float) -> 'PAGE':
         self.price = float(price_)
         self.sold_init = float(sold_init_)
         self.sold_final = float(sold_init_)
@@ -41,7 +43,7 @@ class PAGE:
         self.maxrecord = 0
         return self
 
-    def add_record(self, record):
+    def add_record(self, record: RECORD) -> RECORD:
         record.page = self
         self.records.append(record)
         self.maxrecord += 1
@@ -50,36 +52,37 @@ class PAGE:
         self.sold_final = record.sold_final
         return record
 
-    def create_record(self, input_, output_, sold_init_, doc_id_, doc_type_, dom_):
+    def create_record(self, input_: float, output_: float, sold_init_: float,
+                    doc_id_: str, doc_type_: str, dom_: int) -> RECORD:
         new_record = RECORD()
         # Use current sold_final as the new record's sold_init if there are existing records
         current_sold_init = self.sold_final if self.maxrecord > 0 else sold_init_
         new_record.init(input_, output_, 0, current_sold_init, doc_id_, doc_type_, dom_)
         return self.add_record(new_record)
 
-    def select_record(self, index):
+    def select_record(self, index: int) -> bool:
         if 0 <= index < self.maxrecord:
             self.crtrecord = index
             return True
         return False
 
 class SHEET:
-    def __init__(self):
-        self.year = 2025
-        self.month = 1
-        self.crtpage = 0
-        self.maxpage = 0
-        self.pages = []  # Using dynamic list instead of fixed array
-        self.product = None
+    def __init__(self) -> None:
+        self.year: int = 2025
+        self.month: int = 1
+        self.crtpage: int = 0
+        self.maxpage: int = 0
+        self.pages: List[PAGE] = []  # Using dynamic list instead of fixed array
+        self.product: Optional['PRODUCT'] = None
 
-    def init(self, year_=2025, month_=1):
+    def init(self, year_: int = 2025, month_: int = 1) -> 'SHEET':
         self.year = int(year_)
         self.month = int(month_)
         self.crtpage = 0
         self.maxpage = 0
         return self
 
-    def create_page(self, price, sold_init):
+    def create_page(self, price: float, sold_init: float) -> PAGE:
         new_page = PAGE()
         new_page.sheet = self
         new_page.init(price, sold_init)
@@ -88,29 +91,29 @@ class SHEET:
         self.crtpage = self.maxpage - 1
         return new_page
 
-    def select_page(self, index):
+    def select_page(self, index: int) -> bool:
         if 0 <= index < self.maxpage:
             self.crtpage = index
             return True
         return False
 
 class PRODUCT:
-    def __init__(self):
-        self.name = ""
-        self.unit = ""
-        self.crtsheet = 0
-        self.maxsheet = 0
-        self.sheets = []  # Using dynamic list instead of fixed array
-        self.database = None
+    def __init__(self) -> None:
+        self.name: str = ""
+        self.unit: str = ""
+        self.crtsheet: int = 0
+        self.maxsheet: int = 0
+        self.sheets: List[SHEET] = []  # Using dynamic list instead of fixed array
+        self.database: Optional['DATABASE'] = None
 
-    def init(self, name_, unit_):
+    def init(self, name_: str, unit_: str) -> 'PRODUCT':
         self.name = str(name_)
         self.unit = str(unit_)
         self.crtsheet = 0
         self.maxsheet = 0
         return self
 
-    def create_sheet(self, year=2025, month=4):
+    def create_sheet(self, year: int = 2025, month: int = 4) -> SHEET:
         new_sheet = SHEET()
         new_sheet.product = self
         new_sheet.init(year, month)
@@ -119,24 +122,24 @@ class PRODUCT:
         self.crtsheet = self.maxsheet - 1
         return new_sheet
 
-    def select_sheet(self, index):
+    def select_sheet(self, index: int) -> bool:
         if 0 <= index < self.maxsheet:
             self.crtsheet = index
             return True
         return False
 
 class DATABASE:
-    def __init__(self):
-        self.crtproduct = 0
-        self.maxproduct = 0
-        self.products = []  # Using dynamic list instead of fixed array
+    def __init__(self) -> None:
+        self.crtproduct: int = 0
+        self.maxproduct: int = 0
+        self.products: List[PRODUCT] = []  # Using dynamic list instead of fixed array
 
-    def init(self):
+    def init(self) -> 'DATABASE':
         self.crtproduct = 0
         self.maxproduct = 0
         return self
 
-    def create_product(self, name, unit):
+    def create_product(self, name: str, unit: str) -> PRODUCT:
         new_product = PRODUCT()
         new_product.database = self
         new_product.init(name, unit)
@@ -145,12 +148,12 @@ class DATABASE:
         self.crtproduct = self.maxproduct - 1
         return new_product
 
-    def select_product(self, index):
+    def select_product(self, index: int) -> bool:
         if 0 <= index < self.maxproduct:
             self.crtproduct = index
             return True
         return False
 
 # Initialize database
-db = DATABASE()
+db: DATABASE = DATABASE()
 db.init()

@@ -11,8 +11,7 @@ class RECORD:
         self.dom: int = 0
         self.page: Optional['PAGE'] = None
 
-    def init(self, input_: float, output_: float, sold_final_: float, 
-             sold_init_: float, doc_id_: str, doc_type_: str, dom_: int) -> 'RECORD':
+    def init(self, input_: float, output_: float, sold_final_: float, sold_init_: float, doc_id_: str, doc_type_: str, dom_: int) -> 'RECORD':
         self.input = float(input_)
         self.output = float(output_)
         self.sold_init = float(sold_init_)
@@ -50,8 +49,7 @@ class PAGE:
         self.sold_final = record.sold_final
         return record
 
-    def create_record(self, input_: float, output_: float, sold_init_: float,
-                    doc_id_: str, doc_type_: str, dom_: int) -> RECORD:
+    def create_record(self, input_: float, output_: float, sold_init_: float, doc_id_: str, doc_type_: str, dom_: int) -> RECORD:
         new_record = RECORD()
         # For the first record, use the page's sold_init, otherwise use the previous record's sold_final
         current_sold_init = self.sold_init if self.maxrecord == 0 else self.sold_final

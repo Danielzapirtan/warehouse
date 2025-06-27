@@ -13,68 +13,10 @@ class WarehouseUI:
         # Set up observer to refresh UI when data changes
         self.db.add_observer(self._on_database_change)
         
-# Add these methods to your WarehouseUI class:
-
-    def save_to_browser_storage(self) -> str:
-        """Save database to browser's local storage (JavaScript will handle this)"""
-        try:
-            # Convert database to JSON
-            data = self.db.to_dict()  # Assuming your DATABASE class has this method
-            json_data = json.dumps(data, indent=2, default=str)
-            
-            return f"✅ Database saved to browser storage ({len(self.db.products)} products)"
-        except Exception as e:
-            return f"❌ Error saving to browser storage: {str(e)}"
-
-    def load_from_browser_storage(self, json_data: str) -> Tuple[str, str]:
-        """Load database from browser's local storage"""
-        try:
-            if not json_data or json_data.strip() == "":
-                return "❌ No data found in browser storage", self.get_database_summary()
-            
-            # Parse JSON and load into database
-            data = json.loads(json_data)
-            self.db.from_dict(data)  # Assuming your DATABASE class has this method
-            
-            return f"✅ Database loaded from browser storage ({len(self.db.products)} products)", self.get_database_summary()
-        except json.JSONDecodeError:
-            return "❌ Invalid JSON data in browser storage", self.get_database_summary()
-        except Exception as e:
-            return f"❌ Error loading from browser storage: {str(e)}", self.get_database_summary()
-
-    def export_database_json(self) -> Tuple[str, str]:
-        """Export entire database as JSON for download"""
-        try:
-            data = self.db.to_dict()  # Assuming your DATABASE class has this method
-            json_data = json.dumps(data, indent=2, default=str)
-            
-            # Create filename with timestamp
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"warehouse_database_{timestamp}.json"
-            
-            return json_data, f"✅ Database exported as JSON ({len(self.db.products)} products)"
-        except Exception as e:
-            return "", f"❌ Error exporting database: {str(e)}"
-
-    def import_database_json(self, file_content: str) -> Tuple[str, str]:
-        """Import database from uploaded JSON file"""
-        try:
-            if not file_content or file_content.strip() == "":
-                return "❌ No file content provided", self.get_database_summary()
-            
-            # Parse JSON and load into database
-            data = json.loads(file_content)
-            self.db.from_dict(data)  # Assuming your DATABASE class has this method
-            
-            return f"✅ Database imported successfully ({len(self.db.products)} products)", self.get_database_summary()
-        except json.JSONDecodeError:
-            return "❌ Invalid JSON file format", self.get_database_summary()
-        except Exception as e:
-            return f"❌ Error importing database: {str(e)}", self.get_database_summary()
-        def _on_database_change(self, event_type: str, data) -> None:
-            """Handle database changes - could be used for real-time UI updates"""
-            pass  # For now, we'll handle updates through return values
-            
+    def _on_database_change(self, event_type: str, data) -> None:
+        """Handle database changes - could be used for real-time UI updates"""
+        pass  # For now, we'll handle updates through return values
+        
     def get_products_list(self) -> List[str]:
         """Get list of product names for dropdown"""
         if not self.db.products:
@@ -300,84 +242,6 @@ class WarehouseUI:
         
         return summary if self.db.products else "No products in database"
 
-# Replace your DATA EXPORT TAB with this:
-
-# DATA MANAGEMENT TAB
-with gr.TabItem("💾 Data Management"):
-    with gr.Row():
-        with gr.Column():
-            gr.HTML("<h3>Browser Storage</h3>")
-            gr.HTML("<p><em>Data persists only in current browser session</em></p>")
-            
-            with gr.Row():
-                save_browser_btn = gr.Button("💾 Save to Browser", variant="primary")
-                load_browser_btn = gr.Button("📂 Load from Browser", variant="secondary")
-            
-            browser_status = gr.Textbox(label="Browser Storage Status", interactive=False)
-            
-            gr.HTML("<h3>File Export/Import</h3>")
-            gr.HTML("<p><em>Download/Upload complete database as JSON file</em></p>")
-            
-            with gr.Row():
-                export_json_btn = gr.Button("📥 Export JSON", variant="primary")
-                import_file = gr.File(label="Import JSON File", file_types=[".json"])
-            
-            export_status = gr.Textbox(label="File Operation Status", interactive=False)
-            exported_json = gr.File(label="Download JSON", visible=False)
-            
-        with gr.Column():
-            gr.HTML("<h3>Data Export (Table View)</h3>")
-            with gr.Row():
-                products_for_export = gr.Dropdown(label="Select Product to Export", choices=warehouse_ui.get_products_list())
-                sync_export_btn = gr.Button("🔄 Sync", variant="secondary", size="sm")
-            export_table_btn = gr.Button("📊 Export to Table", variant="primary")
-            export_data = gr.Dataframe(label="Exported Data", interactive=False)
-            
-            # Database summary
-            gr.HTML("<h3>Database Summary</h3>")
-            data_summary = gr.Markdown(warehouse_ui.get_database_summary())
-    
-    # Hidden textbox to store JSON data for browser storage
-    browser_storage_data = gr.Textbox(visible=False)
-    
-    # Event handlers for browser storage
-    save_browser_btn.click(
-        warehouse_ui.save_to_browser_storage,
-        inputs=[],
-        outputs=[browser_status]
-    )
-    
-    load_browser_btn.click(
-        lambda data: warehouse_ui.load_from_browser_storage(data),
-        inputs=[browser_storage_data],
-        outputs=[browser_status, data_summary]
-    )
-    
-    # Event handlers for file export/import
-    export_json_btn.click(
-        warehouse_ui.export_database_json,
-        inputs=[],
-        outputs=[exported_json, export_status]
-    )
-    
-    import_file.change(
-        lambda file: warehouse_ui.import_database_json(file.decode('utf-8') if file else ""),
-        inputs=[import_file],
-        outputs=[export_status, data_summary]
-    )
-    
-    # Event handlers for table export
-    export_table_btn.click(
-        lambda sel: warehouse_ui.export_to_dataframe(get_product_idx(sel)),
-        inputs=[products_for_export],
-        outputs=[export_data]
-    )
-    
-    sync_export_btn.click(
-        lambda: [gr.Dropdown(choices=warehouse_ui.get_products_list()), warehouse_ui.get_database_summary()],
-        inputs=[],
-        outputs=[products_for_export, data_summary]
-    )
     def export_to_dataframe(self, product_idx: int) -> pd.DataFrame:
         """Export product data to pandas DataFrame"""
         if product_idx < 0 or product_idx >= len(self.db.products):
@@ -743,6 +607,24 @@ def create_interface():
                         with gr.Row():
                             products_for_export = gr.Dropdown(label="Select Product to Export", choices=warehouse_ui.get_products_list())
                             sync_export_btn = gr.Button("🔄 Sync", variant="secondary", size="sm")
+                        export_btn = gr.Button("📥 Export to DataFrame", variant="primary")
+                    
+                    with gr.Column():
+                        export_data = gr.Dataframe(label="Exported Data", interactive=False)
+                
+                export_btn.click(
+                    lambda sel: warehouse_ui.export_to_dataframe(get_product_idx(sel)),
+                    inputs=[products_for_export],
+                    outputs=[export_data]
+                )
+                
+                # Sync button handler for Export tab
+                sync_export_btn.click(
+                    lambda: gr.Dropdown(choices=warehouse_ui.get_products_list()),
+                    inputs=[],
+                    outputs=[products_for_export]
+                )
+
         gr.HTML("""
         <div style='text-align: center; margin-top: 20px; color: #666;'>
             <p>🏭 Warehouse Management System | Built with Gradio</p>
@@ -750,43 +632,6 @@ def create_interface():
         </div>
         """)
     
-# Add this JavaScript component at the end of your create_interface() function, before the return statement:
-
-    gr.HTML("""
-    <script>
-    // Browser storage functionality
-    function saveToBrowserStorage() {
-        try {
-            const data = document.querySelector('textarea[data-testid="browser_storage_data"]').value;
-            localStorage.setItem('warehouse_database', data);
-            return 'Data saved to browser storage';
-        } catch (e) {
-            return 'Error saving to browser storage: ' + e.message;
-        }
-    }
-
-    function loadFromBrowserStorage() {
-        try {
-            const data = localStorage.getItem('warehouse_database');
-            if (data) {
-                document.querySelector('textarea[data-testid="browser_storage_data"]').value = data;
-                return data;
-            }
-            return '';
-        } catch (e) {
-            return '';
-        }
-    }
-
-    // Auto-load on page load
-    window.addEventListener('load', function() {
-        const data = loadFromBrowserStorage();
-        if (data) {
-            document.querySelector('textarea[data-testid="browser_storage_data"]').value = data;
-        }
-    });
-    </script>
-    """)
     return app
 
 # Function to launch the app

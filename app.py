@@ -275,7 +275,10 @@ class WarehouseUI:
         return pd.DataFrame(data)
 
 # Initialize UI
-load_warehouse_db(db, filename="db.json", format="json")
+try:
+    db=load_warehouse_db(filename="db.json", format="json")
+catch:
+    print("File db.json not found")
 warehouse_ui = WarehouseUI(db)
 
 def create_interface():

@@ -242,36 +242,6 @@ class WarehouseUI:
         
         return summary if self.db.products else "No products in database"
 
-    def export_to_dataframe(self, product_idx: int) -> pd.DataFrame:
-        """Export product data to pandas DataFrame"""
-        if product_idx < 0 or product_idx >= len(self.db.products):
-            return pd.DataFrame()
-        
-        product = self.db.products[product_idx]
-        data = []
-        
-        for sheet in product.sheets:
-            for page in sheet.pages:
-                for record in page.records:
-                    data.append({
-                        'Product': product.name,
-                        'Unit': product.unit,
-                        'Year': sheet.year,
-                        'Month': sheet.month,
-                        'Price': page.price,
-                        'Page_Init_Stock': page.sold_init,
-                        'Page_Final_Stock': page.sold_final,
-                        'Doc_ID': record.doc_id,
-                        'Doc_Type': record.doc_type,
-                        'DOM': record.dom,
-                        'Input': record.input,
-                        'Output': record.output,
-                        'Record_Init_Stock': record.sold_init,
-                        'Record_Final_Stock': record.sold_final
-                    })
-        
-        return pd.DataFrame(data)
-
 # Initialize UI
 warehouse_ui = WarehouseUI(db)
 
@@ -598,31 +568,6 @@ def create_interface():
                     ) if prod_sel and sheet_sel and page_sel else []),
                     inputs=[products_for_records, sheets_for_records, pages_for_records],
                     outputs=[records_dropdown]
-                )
-
-            # DATA EXPORT TAB
-            with gr.TabItem("📊 Data Export"):
-                with gr.Row():
-                    with gr.Column():
-                        with gr.Row():
-                            products_for_export = gr.Dropdown(label="Select Product to Export", choices=warehouse_ui.get_products_list())
-                            sync_export_btn = gr.Button("🔄 Sync", variant="secondary", size="sm")
-                        export_btn = gr.Button("📥 Export to DataFrame", variant="primary")
-                    
-                    with gr.Column():
-                        export_data = gr.Dataframe(label="Exported Data", interactive=False)
-                
-                export_btn.click(
-                    lambda sel: warehouse_ui.export_to_dataframe(get_product_idx(sel)),
-                    inputs=[products_for_export],
-                    outputs=[export_data]
-                )
-                
-                # Sync button handler for Export tab
-                sync_export_btn.click(
-                    lambda: gr.Dropdown(choices=warehouse_ui.get_products_list()),
-                    inputs=[],
-                    outputs=[products_for_export]
                 )
 
         gr.HTML("""

@@ -6,13 +6,7 @@ import json
 
 # Import your warehouse module
 from warehouse import DATABASE, PRODUCT, SHEET, PAGE, RECORD, db
-# ... existing code ...
 
-    # RECORD CRUD OPERATIONS
-    
-    # ... rest of the code remains the same ...
-
-# ... rest of the code remains the same ...
 class WarehouseUI:
     def __init__(self, database: DATABASE):
         self.db = database

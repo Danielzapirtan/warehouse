@@ -6,7 +6,13 @@ import json
 
 # Import your warehouse module
 from warehouse import DATABASE, PRODUCT, SHEET, PAGE, RECORD, db
+# ... existing code ...
 
+    # RECORD CRUD OPERATIONS
+    
+    # ... rest of the code remains the same ...
+
+# ... rest of the code remains the same ...
 class WarehouseUI:
     def __init__(self, database: DATABASE):
         self.db = database
@@ -138,11 +144,12 @@ class WarehouseUI:
             if not doc_id.strip():
                 return "Error: Document ID cannot be empty"
             
-            record = page.create_record(input_val, output_val, 0, doc_id.strip(), doc_type.strip(), dom)
+            # Removed sold_init parameter (3rd argument) from create_record call
+            record = page.create_record(input_val, output_val, doc_id.strip(), doc_type.strip(), dom)
             return f"✅ Created record: {record.doc_id} - Final stock: {record.sold_final:.2f}"
         except (IndexError, AttributeError):
             return "Error: Invalid selection"
-    
+
     def update_record(self, product_idx: int, sheet_idx: int, page_idx: int, record_idx: int,
                      input_val: float, output_val: float, doc_id: str, doc_type: str, dom: int) -> str:
         """Update existing record"""

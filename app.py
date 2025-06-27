@@ -292,11 +292,13 @@ def create_interface():
                         create_product_btn = gr.Button("➕ Create Product", variant="primary")
                         
                         gr.HTML("<h3>Manage Products</h3>")
-                        products_dropdown = gr.Dropdown(
-                            label="Select Product",
-                            choices=warehouse_ui.get_products_list(),
-                            value=0 if warehouse_ui.get_products_list()[0] != "No products available" else None
-                        )
+                        with gr.Row():
+                            products_dropdown = gr.Dropdown(
+                                label="Select Product",
+                                choices=warehouse_ui.get_products_list(),
+                                value=0 if warehouse_ui.get_products_list()[0] != "No products available" else None
+                            )
+                            sync_products_btn = gr.Button("🔄 Sync", variant="secondary", size="sm")
                         
                         update_name = gr.Textbox(label="New Name")
                         update_unit = gr.Textbox(label="New Unit")
@@ -332,15 +334,27 @@ def create_interface():
                     inputs=[products_dropdown],
                     outputs=[product_status, products_dropdown, db_summary]
                 )
+                
+                # Sync button handler for Products tab
+                sync_products_btn.click(
+                    lambda: [
+                        gr.Dropdown(choices=warehouse_ui.get_products_list()),
+                        warehouse_ui.get_database_summary()
+                    ],
+                    inputs=[],
+                    outputs=[products_dropdown, db_summary]
+                )
 
             # SHEETS TAB
             with gr.TabItem("📋 Sheets"):
                 with gr.Row():
                     with gr.Column():
-                        products_for_sheets = gr.Dropdown(
-                            label="Select Product",
-                            choices=warehouse_ui.get_products_list()
-                        )
+                        with gr.Row():
+                            products_for_sheets = gr.Dropdown(
+                                label="Select Product",
+                                choices=warehouse_ui.get_products_list()
+                            )
+                            sync_sheets_product_btn = gr.Button("🔄 Sync", variant="secondary", size="sm")
                         
                         gr.HTML("<h3>Create Sheet</h3>")
                         sheet_year = gr.Number(label="Year", value=2025, precision=0)
@@ -348,7 +362,9 @@ def create_interface():
                         create_sheet_btn = gr.Button("➕ Create Sheet", variant="primary")
                         
                         gr.HTML("<h3>Manage Sheets</h3>")
-                        sheets_dropdown = gr.Dropdown(label="Select Sheet", choices=["Select product first"])
+                        with gr.Row():
+                            sheets_dropdown = gr.Dropdown(label="Select Sheet", choices=["Select product first"])
+                            sync_sheets_btn = gr.Button("🔄 Sync", variant="secondary", size="sm")
                         delete_sheet_btn = gr.Button("🗑️ Delete Sheet", variant="stop")
                     
                     with gr.Column():
@@ -356,7 +372,7 @@ def create_interface():
                 
                 # Update sheets dropdown when product changes
                 products_for_sheets.change(
-                    lambda sel: gr.Dropdown(choices=warehouse_ui.get_sheets_list(get_product_idx(sel))),
+                    lambda sel: gr.Dropdown(choices=warehouse_ui.get_sheets_list(get_product_idx(sel)) if sel else []),
                     inputs=[products_for_sheets],
                     outputs=[sheets_dropdown]
                 )
@@ -377,13 +393,30 @@ def create_interface():
                     inputs=[products_for_sheets, sheets_dropdown],
                     outputs=[sheet_status, sheets_dropdown]
                 )
+                
+                # Sync buttons handlers for Sheets tab
+                sync_sheets_product_btn.click(
+                    lambda: gr.Dropdown(choices=warehouse_ui.get_products_list()),
+                    inputs=[],
+                    outputs=[products_for_sheets]
+                )
+                
+                sync_sheets_btn.click(
+                    lambda sel: gr.Dropdown(choices=warehouse_ui.get_sheets_list(get_product_idx(sel)) if sel else []),
+                    inputs=[products_for_sheets],
+                    outputs=[sheets_dropdown]
+                )
 
             # PAGES TAB
             with gr.TabItem("📄 Pages"):
                 with gr.Row():
                     with gr.Column():
-                        products_for_pages = gr.Dropdown(label="Select Product", choices=warehouse_ui.get_products_list())
-                        sheets_for_pages = gr.Dropdown(label="Select Sheet", choices=["Select product first"])
+                        with gr.Row():
+                            products_for_pages = gr.Dropdown(label="Select Product", choices=warehouse_ui.get_products_list())
+                            sync_pages_product_btn = gr.Button("🔄 Sync", variant="secondary", size="sm")
+                        with gr.Row():
+                            sheets_for_pages = gr.Dropdown(label="Select Sheet", choices=["Select product first"])
+                            sync_pages_sheet_btn = gr.Button("🔄 Sync", variant="secondary", size="sm")
                         
                         gr.HTML("<h3>Create Page</h3>")
                         page_price = gr.Number(label="Price", value=0.0, step=0.01)
@@ -391,7 +424,9 @@ def create_interface():
                         create_page_btn = gr.Button("➕ Create Page", variant="primary")
                         
                         gr.HTML("<h3>Manage Pages</h3>")
-                        pages_dropdown = gr.Dropdown(label="Select Page", choices=["Select sheet first"])
+                        with gr.Row():
+                            pages_dropdown = gr.Dropdown(label="Select Page", choices=["Select sheet first"])
+                            sync_pages_btn = gr.Button("🔄 Sync", variant="secondary", size="sm")
                         delete_page_btn = gr.Button("🗑️ Delete Page", variant="stop")
                     
                     with gr.Column():
@@ -399,13 +434,13 @@ def create_interface():
                 
                 # Update dropdowns
                 products_for_pages.change(
-                    lambda sel: gr.Dropdown(choices=warehouse_ui.get_sheets_list(get_product_idx(sel))),
+                    lambda sel: gr.Dropdown(choices=warehouse_ui.get_sheets_list(get_product_idx(sel)) if sel else []),
                     inputs=[products_for_pages],
                     outputs=[sheets_for_pages]
                 )
                 
                 sheets_for_pages.change(
-                    lambda prod_sel, sheet_sel: gr.Dropdown(choices=warehouse_ui.get_pages_list(get_product_idx(prod_sel), get_sheet_idx(sheet_sel))),
+                    lambda prod_sel, sheet_sel: gr.Dropdown(choices=warehouse_ui.get_pages_list(get_product_idx(prod_sel), get_sheet_idx(sheet_sel)) if prod_sel and sheet_sel else []),
                     inputs=[products_for_pages, sheets_for_pages],
                     outputs=[pages_dropdown]
                 )
@@ -430,14 +465,39 @@ def create_interface():
                     inputs=[products_for_pages, sheets_for_pages, pages_dropdown],
                     outputs=[page_status, pages_dropdown]
                 )
+                
+                # Sync buttons handlers for Pages tab
+                sync_pages_product_btn.click(
+                    lambda: gr.Dropdown(choices=warehouse_ui.get_products_list()),
+                    inputs=[],
+                    outputs=[products_for_pages]
+                )
+                
+                sync_pages_sheet_btn.click(
+                    lambda sel: gr.Dropdown(choices=warehouse_ui.get_sheets_list(get_product_idx(sel)) if sel else []),
+                    inputs=[products_for_pages],
+                    outputs=[sheets_for_pages]
+                )
+                
+                sync_pages_btn.click(
+                    lambda prod_sel, sheet_sel: gr.Dropdown(choices=warehouse_ui.get_pages_list(get_product_idx(prod_sel), get_sheet_idx(sheet_sel)) if prod_sel and sheet_sel else []),
+                    inputs=[products_for_pages, sheets_for_pages],
+                    outputs=[pages_dropdown]
+                )
 
             # RECORDS TAB
             with gr.TabItem("📝 Records"):
                 with gr.Row():
                     with gr.Column():
-                        products_for_records = gr.Dropdown(label="Select Product", choices=warehouse_ui.get_products_list())
-                        sheets_for_records = gr.Dropdown(label="Select Sheet", choices=["Select product first"])
-                        pages_for_records = gr.Dropdown(label="Select Page", choices=["Select sheet first"])
+                        with gr.Row():
+                            products_for_records = gr.Dropdown(label="Select Product", choices=warehouse_ui.get_products_list())
+                            sync_records_product_btn = gr.Button("🔄 Sync", variant="secondary", size="sm")
+                        with gr.Row():
+                            sheets_for_records = gr.Dropdown(label="Select Sheet", choices=["Select product first"])
+                            sync_records_sheet_btn = gr.Button("🔄 Sync", variant="secondary", size="sm")
+                        with gr.Row():
+                            pages_for_records = gr.Dropdown(label="Select Page", choices=["Select sheet first"])
+                            sync_records_page_btn = gr.Button("🔄 Sync", variant="secondary", size="sm")
                         
                         gr.HTML("<h3>Create/Update Record</h3>")
                         record_input = gr.Number(label="Input", value=0.0, step=0.01)
@@ -451,7 +511,9 @@ def create_interface():
                             update_record_btn = gr.Button("✏️ Update Record", variant="secondary")
                         
                         gr.HTML("<h3>Manage Records</h3>")
-                        records_dropdown = gr.Dropdown(label="Select Record", choices=["Select page first"])
+                        with gr.Row():
+                            records_dropdown = gr.Dropdown(label="Select Record", choices=["Select page first"])
+                            sync_records_btn = gr.Button("🔄 Sync", variant="secondary", size="sm")
                         delete_record_btn = gr.Button("🗑️ Delete Record", variant="stop")
                     
                     with gr.Column():
@@ -459,13 +521,13 @@ def create_interface():
                 
                 # Update dropdowns for records
                 products_for_records.change(
-                    lambda sel: gr.Dropdown(choices=warehouse_ui.get_sheets_list(get_product_idx(sel))),
+                    lambda sel: gr.Dropdown(choices=warehouse_ui.get_sheets_list(get_product_idx(sel)) if sel else []),
                     inputs=[products_for_records],
                     outputs=[sheets_for_records]
                 )
                 
                 sheets_for_records.change(
-                    lambda prod_sel, sheet_sel: gr.Dropdown(choices=warehouse_ui.get_pages_list(get_product_idx(prod_sel), get_sheet_idx(sheet_sel))),
+                    lambda prod_sel, sheet_sel: gr.Dropdown(choices=warehouse_ui.get_pages_list(get_product_idx(prod_sel), get_sheet_idx(sheet_sel)) if prod_sel and sheet_sel else []),
                     inputs=[products_for_records, sheets_for_records],
                     outputs=[pages_for_records]
                 )
@@ -473,7 +535,7 @@ def create_interface():
                 pages_for_records.change(
                     lambda prod_sel, sheet_sel, page_sel: gr.Dropdown(choices=warehouse_ui.get_records_list(
                         get_product_idx(prod_sel), get_sheet_idx(sheet_sel), get_page_idx(page_sel)
-                    )),
+                    ) if prod_sel and sheet_sel and page_sel else []),
                     inputs=[products_for_records, sheets_for_records, pages_for_records],
                     outputs=[records_dropdown]
                 )
@@ -510,12 +572,41 @@ def create_interface():
                     inputs=[products_for_records, sheets_for_records, pages_for_records, records_dropdown],
                     outputs=[record_status, records_dropdown]
                 )
+                
+                # Sync buttons handlers for Records tab
+                sync_records_product_btn.click(
+                    lambda: gr.Dropdown(choices=warehouse_ui.get_products_list()),
+                    inputs=[],
+                    outputs=[products_for_records]
+                )
+                
+                sync_records_sheet_btn.click(
+                    lambda sel: gr.Dropdown(choices=warehouse_ui.get_sheets_list(get_product_idx(sel)) if sel else []),
+                    inputs=[products_for_records],
+                    outputs=[sheets_for_records]
+                )
+                
+                sync_records_page_btn.click(
+                    lambda prod_sel, sheet_sel: gr.Dropdown(choices=warehouse_ui.get_pages_list(get_product_idx(prod_sel), get_sheet_idx(sheet_sel)) if prod_sel and sheet_sel else []),
+                    inputs=[products_for_records, sheets_for_records],
+                    outputs=[pages_for_records]
+                )
+                
+                sync_records_btn.click(
+                    lambda prod_sel, sheet_sel, page_sel: gr.Dropdown(choices=warehouse_ui.get_records_list(
+                        get_product_idx(prod_sel), get_sheet_idx(sheet_sel), get_page_idx(page_sel)
+                    ) if prod_sel and sheet_sel and page_sel else []),
+                    inputs=[products_for_records, sheets_for_records, pages_for_records],
+                    outputs=[records_dropdown]
+                )
 
             # DATA EXPORT TAB
             with gr.TabItem("📊 Data Export"):
                 with gr.Row():
                     with gr.Column():
-                        products_for_export = gr.Dropdown(label="Select Product to Export", choices=warehouse_ui.get_products_list())
+                        with gr.Row():
+                            products_for_export = gr.Dropdown(label="Select Product to Export", choices=warehouse_ui.get_products_list())
+                            sync_export_btn = gr.Button("🔄 Sync", variant="secondary", size="sm")
                         export_btn = gr.Button("📥 Export to DataFrame", variant="primary")
                     
                     with gr.Column():
@@ -525,6 +616,13 @@ def create_interface():
                     lambda sel: warehouse_ui.export_to_dataframe(get_product_idx(sel)),
                     inputs=[products_for_export],
                     outputs=[export_data]
+                )
+                
+                # Sync button handler for Export tab
+                sync_export_btn.click(
+                    lambda: gr.Dropdown(choices=warehouse_ui.get_products_list()),
+                    inputs=[],
+                    outputs=[products_for_export]
                 )
 
         gr.HTML("""
@@ -546,20 +644,6 @@ def launch_app(share=False, debug=False):
 # For Colab usage
 if __name__ == "__main__":
     # Create some sample data for demonstration
-    product1 = db.create_product("Apples", "kg")
-    sheet1 = product1.create_sheet(2025, 6)
-    page1 = sheet1.create_page(2.50, 100.0)
-    page1.create_record(50.0, 20.0, "INV001", "Purchase Invoice", 15)
-    page1.create_record(30.0, 40.0, "INV002", "Sale Invoice", 20)
-    
-    product2 = db.create_product("Oranges", "kg")
-    sheet2 = product2.create_sheet(2025, 6)
-    page2 = sheet2.create_page(3.00, 80.0)
-    page2.create_record(25.0, 15.0, "INV003", "Purchase Invoice", 10)
     
     print("🏭 Warehouse Management System")
     print("================================")
-    print("Sample data created!")
-    print(f"Products: {len(db.products)}")
-    print("Ready to launch UI...")
-    print("\nTo launch the interface, call: launch_app(share=True)")

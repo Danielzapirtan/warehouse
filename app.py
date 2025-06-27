@@ -372,7 +372,7 @@ def create_interface():
                 
                 # Update sheets dropdown when product changes
                 products_for_sheets.change(
-                    lambda sel: gr.Dropdown(choices=warehouse_ui.get_sheets_list(get_product_idx(sel)) if sel else gr.Dropdown(),
+                    lambda sel: gr.Dropdown(choices=warehouse_ui.get_sheets_list(get_product_idx(sel)) if sel else []),
                     inputs=[products_for_sheets],
                     outputs=[sheets_dropdown]
                 )
@@ -402,7 +402,7 @@ def create_interface():
                 )
                 
                 sync_sheets_btn.click(
-                    lambda sel: gr.Dropdown(choices=warehouse_ui.get_sheets_list(get_product_idx(sel)) if sel else gr.Dropdown(),
+                    lambda sel: gr.Dropdown(choices=warehouse_ui.get_sheets_list(get_product_idx(sel)) if sel else []),
                     inputs=[products_for_sheets],
                     outputs=[sheets_dropdown]
                 )
@@ -434,13 +434,13 @@ def create_interface():
                 
                 # Update dropdowns
                 products_for_pages.change(
-                    lambda sel: gr.Dropdown(choices=warehouse_ui.get_sheets_list(get_product_idx(sel)) if sel else gr.Dropdown(),
+                    lambda sel: gr.Dropdown(choices=warehouse_ui.get_sheets_list(get_product_idx(sel)) if sel else []),
                     inputs=[products_for_pages],
                     outputs=[sheets_for_pages]
                 )
                 
                 sheets_for_pages.change(
-                    lambda prod_sel, sheet_sel: gr.Dropdown(choices=warehouse_ui.get_pages_list(get_product_idx(prod_sel), get_sheet_idx(sheet_sel)) if prod_sel and sheet_sel else gr.Dropdown(),
+                    lambda prod_sel, sheet_sel: gr.Dropdown(choices=warehouse_ui.get_pages_list(get_product_idx(prod_sel), get_sheet_idx(sheet_sel)) if prod_sel and sheet_sel else []),
                     inputs=[products_for_pages, sheets_for_pages],
                     outputs=[pages_dropdown]
                 )
@@ -474,13 +474,13 @@ def create_interface():
                 )
                 
                 sync_pages_sheet_btn.click(
-                    lambda sel: gr.Dropdown(choices=warehouse_ui.get_sheets_list(get_product_idx(sel)) if sel else gr.Dropdown(),
+                    lambda sel: gr.Dropdown(choices=warehouse_ui.get_sheets_list(get_product_idx(sel)) if sel else []),
                     inputs=[products_for_pages],
                     outputs=[sheets_for_pages]
                 )
                 
                 sync_pages_btn.click(
-                    lambda prod_sel, sheet_sel: gr.Dropdown(choices=warehouse_ui.get_pages_list(get_product_idx(prod_sel), get_sheet_idx(sheet_sel)) if prod_sel and sheet_sel else gr.Dropdown(),
+                    lambda prod_sel, sheet_sel: gr.Dropdown(choices=warehouse_ui.get_pages_list(get_product_idx(prod_sel), get_sheet_idx(sheet_sel)) if prod_sel and sheet_sel else []),
                     inputs=[products_for_pages, sheets_for_pages],
                     outputs=[pages_dropdown]
                 )
@@ -521,13 +521,13 @@ def create_interface():
                 
                 # Update dropdowns for records
                 products_for_records.change(
-                    lambda sel: gr.Dropdown(choices=warehouse_ui.get_sheets_list(get_product_idx(sel)) if sel else gr.Dropdown(),
+                    lambda sel: gr.Dropdown(choices=warehouse_ui.get_sheets_list(get_product_idx(sel)) if sel else []),
                     inputs=[products_for_records],
                     outputs=[sheets_for_records]
                 )
                 
                 sheets_for_records.change(
-                    lambda prod_sel, sheet_sel: gr.Dropdown(choices=warehouse_ui.get_pages_list(get_product_idx(prod_sel), get_sheet_idx(sheet_sel)) if prod_sel and sheet_sel else gr.Dropdown(),
+                    lambda prod_sel, sheet_sel: gr.Dropdown(choices=warehouse_ui.get_pages_list(get_product_idx(prod_sel), get_sheet_idx(sheet_sel)) if prod_sel and sheet_sel else []),
                     inputs=[products_for_records, sheets_for_records],
                     outputs=[pages_for_records]
                 )
@@ -535,7 +535,7 @@ def create_interface():
                 pages_for_records.change(
                     lambda prod_sel, sheet_sel, page_sel: gr.Dropdown(choices=warehouse_ui.get_records_list(
                         get_product_idx(prod_sel), get_sheet_idx(sheet_sel), get_page_idx(page_sel)
-                    )) if prod_sel and sheet_sel and page_sel else gr.Dropdown(),
+                    ) if prod_sel and sheet_sel and page_sel else []),
                     inputs=[products_for_records, sheets_for_records, pages_for_records],
                     outputs=[records_dropdown]
                 )
@@ -581,13 +581,13 @@ def create_interface():
                 )
                 
                 sync_records_sheet_btn.click(
-                    lambda sel: gr.Dropdown(choices=warehouse_ui.get_sheets_list(get_product_idx(sel)) if sel else gr.Dropdown(),
+                    lambda sel: gr.Dropdown(choices=warehouse_ui.get_sheets_list(get_product_idx(sel)) if sel else []),
                     inputs=[products_for_records],
                     outputs=[sheets_for_records]
                 )
                 
                 sync_records_page_btn.click(
-                    lambda prod_sel, sheet_sel: gr.Dropdown(choices=warehouse_ui.get_pages_list(get_product_idx(prod_sel), get_sheet_idx(sheet_sel)) if prod_sel and sheet_sel else gr.Dropdown(),
+                    lambda prod_sel, sheet_sel: gr.Dropdown(choices=warehouse_ui.get_pages_list(get_product_idx(prod_sel), get_sheet_idx(sheet_sel)) if prod_sel and sheet_sel else []),
                     inputs=[products_for_records, sheets_for_records],
                     outputs=[pages_for_records]
                 )
@@ -595,7 +595,7 @@ def create_interface():
                 sync_records_btn.click(
                     lambda prod_sel, sheet_sel, page_sel: gr.Dropdown(choices=warehouse_ui.get_records_list(
                         get_product_idx(prod_sel), get_sheet_idx(sheet_sel), get_page_idx(page_sel)
-                    )) if prod_sel and sheet_sel and page_sel else gr.Dropdown(),
+                    ) if prod_sel and sheet_sel and page_sel else []),
                     inputs=[products_for_records, sheets_for_records, pages_for_records],
                     outputs=[records_dropdown]
                 )

@@ -277,7 +277,7 @@ class WarehouseUI:
 # Initialize UI
 try:
     db=load_warehouse_db(filename="db.json", format="json")
-catch:
+except:
     print("File db.json not found")
 warehouse_ui = WarehouseUI(db)
 

@@ -546,20 +546,6 @@ def launch_app(share=False, debug=False):
 # For Colab usage
 if __name__ == "__main__":
     # Create some sample data for demonstration
-    product1 = db.create_product("Apples", "kg")
-    sheet1 = product1.create_sheet(2025, 6)
-    page1 = sheet1.create_page(2.50, 100.0)
-    page1.create_record(50.0, 20.0, "INV001", "Purchase Invoice", 15)
-    page1.create_record(30.0, 40.0, "INV002", "Sale Invoice", 20)
-    
-    product2 = db.create_product("Oranges", "kg")
-    sheet2 = product2.create_sheet(2025, 6)
-    page2 = sheet2.create_page(3.00, 80.0)
-    page2.create_record(25.0, 15.0, "INV003", "Purchase Invoice", 10)
     
     print("🏭 Warehouse Management System")
     print("================================")
-    print("Sample data created!")
-    print(f"Products: {len(db.products)}")
-    print("Ready to launch UI...")
-    print("\nTo launch the interface, call: launch_app(share=True)")

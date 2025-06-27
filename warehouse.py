@@ -11,7 +11,7 @@ class RECORD:
         self.dom: int = 0
         self.page: Optional['PAGE'] = None
 
-    def init(self, input_: float, output_: float, 
+    def init(self, input_: float, output_: float, sold_final_: float, 
              sold_init_: float, doc_id_: str, doc_type_: str, dom_: int) -> 'RECORD':
         self.input = float(input_)
         self.output = float(output_)
@@ -19,8 +19,8 @@ class RECORD:
         self.doc_id = doc_id_
         self.doc_type = doc_type_
         self.dom = int(dom_)
-        
-        # Removed sold_final calculation here - will be handled by page recalculation
+        # Calculate the sold_final value based on input/output
+        self.sold_final = self.sold_init + self.input - self.output
         
         # Trigger update propagation if attached to a page
         if self.page:
@@ -43,7 +43,10 @@ class RECORD:
         if dom_ is not None:
             self.dom = int(dom_)
         
-        # Trigger page recalculation instead of local calculation
+        # Recalculate sold_final
+        self.sold_final = self.sold_init + self.input - self.output
+        
+        # Propagate changes up the hierarchy
         if self.page:
             self.page._update_totals()
 
@@ -77,19 +80,23 @@ class PAGE:
 
     def _update_totals(self) -> None:
         """Update page totals based on all records and propagate changes"""
-        # Recalculate entire record chain when any change occurs
-        self._recalculate_records()
+        if self.records:
+            # The final sold amount should be the last record's sold_final
+            self.sold_final = self.records[-1].sold_final
+        else:
+            self.sold_final = self.sold_init
         
         # Propagate changes to sheet level
         if self.sheet:
             self.sheet._update_totals()
 
-    def create_record(self, input_: float, output_: float,
+    def create_record(self, input_: float, output_: float, 
                     doc_id_: str, doc_type_: str, dom_: int) -> RECORD:
+        """Fixed create_record method - removed sold_init parameter"""
         new_record = RECORD()
         # For the first record, use the page's sold_init, otherwise use the previous record's sold_final
         current_sold_init = self.sold_init if self.maxrecord == 0 else self.sold_final
-        new_record.init(input_, output_, current_sold_init, doc_id_, doc_type_, dom_)
+        new_record.init(input_, output_, 0, current_sold_init, doc_id_, doc_type_, dom_)
         return self.add_record(new_record)
 
     def select_record(self, index: int) -> bool:
@@ -108,7 +115,8 @@ class PAGE:
             elif self.maxrecord == 0:
                 self.crtrecord = 0
             
-            # Recalculate all records after removal
+            # Recalculate all records' sold_init and sold_final values
+            self._recalculate_records()
             self._update_totals()
             return True
         return False
@@ -120,9 +128,6 @@ class PAGE:
             record.sold_init = current_sold
             record.sold_final = record.sold_init + record.input - record.output
             current_sold = record.sold_final
-        
-        # Update page's final stock
-        self.sold_final = current_sold
 
 class SHEET:
     def __init__(self) -> None:

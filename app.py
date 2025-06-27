@@ -10,6 +10,12 @@ from warehouse import DATABASE, PRODUCT, SHEET, PAGE, RECORD, db
 class WarehouseUI:
     def __init__(self, database: DATABASE):
         self.db = database
+        # Set up observer to refresh UI when data changes
+        self.db.add_observer(self._on_database_change)
+        
+    def _on_database_change(self, event_type: str, data) -> None:
+        """Handle database changes - could be used for real-time UI updates"""
+        pass  # For now, we'll handle updates through return values
         
     def get_products_list(self) -> List[str]:
         """Get list of product names for dropdown"""
@@ -34,7 +40,7 @@ class WarehouseUI:
         sheet = self.db.products[product_idx].sheets[sheet_idx]
         if not sheet.pages:
             return ["No pages available"]
-        return [f"{i}: Price ${page.price:.2f}, Init: {page.sold_init:.2f}" 
+        return [f"{i}: Price ${page.price:.2f}, Init: {page.sold_init:.2f}, Final: {page.sold_final:.2f}" 
                 for i, page in enumerate(sheet.pages)]
     
     def get_records_list(self, product_idx: int, sheet_idx: int, page_idx: int) -> List[str]:
@@ -43,138 +49,173 @@ class WarehouseUI:
             page = self.db.products[product_idx].sheets[sheet_idx].pages[page_idx]
             if not page.records:
                 return ["No records available"]
-            return [f"{i}: {record.doc_id} ({record.doc_type}) - Final: {record.sold_final:.2f}" 
+            return [f"{i}: {record.doc_id} ({record.doc_type}) - In:{record.input}, Out:{record.output}, Final:{record.sold_final:.2f}" 
                     for i, record in enumerate(page.records)]
         except (IndexError, AttributeError):
             return ["No records available"]
 
     # PRODUCT CRUD OPERATIONS
-    def create_product(self, name: str, unit: str) -> Tuple[str, str]:
+    def create_product(self, name: str, unit: str) -> Tuple[str, gr.Dropdown, str]:
         """Create a new product"""
         if not name.strip():
-            return "Error: Product name cannot be empty", self.get_products_dropdown()
+            return "Error: Product name cannot be empty", gr.Dropdown(choices=self.get_products_list()), self.get_database_summary()
         
         product = self.db.create_product(name.strip(), unit.strip())
-        return f"✅ Created product: {product.name} ({product.unit})", gr.Dropdown(choices=self.get_products_list())
+        return (f"✅ Created product: {product.name} ({product.unit})", 
+                gr.Dropdown(choices=self.get_products_list()), 
+                self.get_database_summary())
     
-    def update_product(self, product_idx: int, name: str, unit: str) -> str:
+    def update_product(self, product_idx: int, name: str, unit: str) -> Tuple[str, str]:
         """Update existing product"""
         if product_idx < 0 or product_idx >= len(self.db.products):
-            return "Error: Invalid product selection"
+            return "Error: Invalid product selection", self.get_database_summary()
         
         if not name.strip():
-            return "Error: Product name cannot be empty"
+            return "Error: Product name cannot be empty", self.get_database_summary()
         
         product = self.db.products[product_idx]
-        product.name = name.strip()
-        product.unit = unit.strip()
-        return f"✅ Updated product: {product.name} ({product.unit})"
+        product.update_info(name.strip(), unit.strip())
+        return (f"✅ Updated product: {product.name} ({product.unit})", 
+                self.get_database_summary())
     
-    def delete_product(self, product_idx: int) -> Tuple[str, str]:
+    def delete_product(self, product_idx: int) -> Tuple[str, gr.Dropdown, str]:
         """Delete product"""
         if product_idx < 0 or product_idx >= len(self.db.products):
-            return "Error: Invalid product selection", self.get_products_dropdown()
+            return ("Error: Invalid product selection", 
+                    gr.Dropdown(choices=self.get_products_list()), 
+                    self.get_database_summary())
         
-        product = self.db.products.pop(product_idx)
-        self.db.maxproduct -= 1
-        if self.db.crtproduct >= self.db.maxproduct:
-            self.db.crtproduct = max(0, self.db.maxproduct - 1)
+        product_name = self.db.products[product_idx].name
+        success = self.db.remove_product(product_idx)
         
-        return f"🗑️ Deleted product: {product.name}", gr.Dropdown(choices=self.get_products_list())
+        if success:
+            return (f"🗑️ Deleted product: {product_name}", 
+                    gr.Dropdown(choices=self.get_products_list()), 
+                    self.get_database_summary())
+        else:
+            return ("Error: Could not delete product", 
+                    gr.Dropdown(choices=self.get_products_list()), 
+                    self.get_database_summary())
 
     # SHEET CRUD OPERATIONS
-    def create_sheet(self, product_idx: int, year: int, month: int) -> str:
+    def create_sheet(self, product_idx: int, year: int, month: int) -> Tuple[str, gr.Dropdown]:
         """Create a new sheet"""
         if product_idx < 0 or product_idx >= len(self.db.products):
-            return "Error: Invalid product selection"
+            return "Error: Invalid product selection", gr.Dropdown(choices=["No sheets available"])
         
         if not (1 <= month <= 12):
-            return "Error: Month must be between 1 and 12"
+            return "Error: Month must be between 1 and 12", gr.Dropdown(choices=["No sheets available"])
         
         product = self.db.products[product_idx]
         sheet = product.create_sheet(year, month)
-        return f"✅ Created sheet: {sheet.year}-{sheet.month:02d} for {product.name}"
+        return (f"✅ Created sheet: {sheet.year}-{sheet.month:02d} for {product.name}", 
+                gr.Dropdown(choices=self.get_sheets_list(product_idx)))
     
-    def delete_sheet(self, product_idx: int, sheet_idx: int) -> str:
+    def delete_sheet(self, product_idx: int, sheet_idx: int) -> Tuple[str, gr.Dropdown]:
         """Delete sheet"""
         try:
             product = self.db.products[product_idx]
-            sheet = product.sheets.pop(sheet_idx)
-            product.maxsheet -= 1
-            if product.crtsheet >= product.maxsheet:
-                product.crtsheet = max(0, product.maxsheet - 1)
-            return f"🗑️ Deleted sheet: {sheet.year}-{sheet.month:02d}"
+            if sheet_idx < 0 or sheet_idx >= len(product.sheets):
+                return "Error: Invalid sheet selection", gr.Dropdown(choices=self.get_sheets_list(product_idx))
+            
+            sheet_name = f"{product.sheets[sheet_idx].year}-{product.sheets[sheet_idx].month:02d}"
+            success = product.remove_sheet(sheet_idx)
+            
+            if success:
+                return (f"🗑️ Deleted sheet: {sheet_name}", 
+                        gr.Dropdown(choices=self.get_sheets_list(product_idx)))
+            else:
+                return ("Error: Could not delete sheet", 
+                        gr.Dropdown(choices=self.get_sheets_list(product_idx)))
         except (IndexError, AttributeError):
-            return "Error: Invalid selection"
+            return "Error: Invalid selection", gr.Dropdown(choices=["No sheets available"])
 
     # PAGE CRUD OPERATIONS
-    def create_page(self, product_idx: int, sheet_idx: int, price: float, sold_init: float) -> str:
+    def create_page(self, product_idx: int, sheet_idx: int, price: float, sold_init: float) -> Tuple[str, gr.Dropdown]:
         """Create a new page"""
         try:
             sheet = self.db.products[product_idx].sheets[sheet_idx]
             page = sheet.create_page(price, sold_init)
-            return f"✅ Created page: Price ${page.price:.2f}, Initial stock: {page.sold_init:.2f}"
+            return (f"✅ Created page: Price ${page.price:.2f}, Initial stock: {page.sold_init:.2f}", 
+                    gr.Dropdown(choices=self.get_pages_list(product_idx, sheet_idx)))
         except (IndexError, AttributeError):
-            return "Error: Invalid selection"
+            return "Error: Invalid selection", gr.Dropdown(choices=["No pages available"])
     
-    def delete_page(self, product_idx: int, sheet_idx: int, page_idx: int) -> str:
+    def delete_page(self, product_idx: int, sheet_idx: int, page_idx: int) -> Tuple[str, gr.Dropdown]:
         """Delete page"""
         try:
             sheet = self.db.products[product_idx].sheets[sheet_idx]
-            page = sheet.pages.pop(page_idx)
-            sheet.maxpage -= 1
-            if sheet.crtpage >= sheet.maxpage:
-                sheet.crtpage = max(0, sheet.maxpage - 1)
-            return f"🗑️ Deleted page: Price ${page.price:.2f}"
+            if page_idx < 0 or page_idx >= len(sheet.pages):
+                return ("Error: Invalid page selection", 
+                        gr.Dropdown(choices=self.get_pages_list(product_idx, sheet_idx)))
+            
+            page_info = f"Price ${sheet.pages[page_idx].price:.2f}"
+            success = sheet.remove_page(page_idx)
+            
+            if success:
+                return (f"🗑️ Deleted page: {page_info}", 
+                        gr.Dropdown(choices=self.get_pages_list(product_idx, sheet_idx)))
+            else:
+                return ("Error: Could not delete page", 
+                        gr.Dropdown(choices=self.get_pages_list(product_idx, sheet_idx)))
         except (IndexError, AttributeError):
-            return "Error: Invalid selection"
+            return "Error: Invalid selection", gr.Dropdown(choices=["No pages available"])
 
     # RECORD CRUD OPERATIONS
     def create_record(self, product_idx: int, sheet_idx: int, page_idx: int, 
-                     input_val: float, output_val: float, doc_id: str, doc_type: str, dom: int) -> str:
+                     input_val: float, output_val: float, doc_id: str, doc_type: str, dom: int) -> Tuple[str, gr.Dropdown]:
         """Create a new record"""
         try:
             page = self.db.products[product_idx].sheets[sheet_idx].pages[page_idx]
             if not doc_id.strip():
-                return "Error: Document ID cannot be empty"
+                return ("Error: Document ID cannot be empty", 
+                        gr.Dropdown(choices=self.get_records_list(product_idx, sheet_idx, page_idx)))
             
-            # Removed sold_init parameter (3rd argument) from create_record call
             record = page.create_record(input_val, output_val, doc_id.strip(), doc_type.strip(), dom)
-            return f"✅ Created record: {record.doc_id} - Final stock: {record.sold_final:.2f}"
+            return (f"✅ Created record: {record.doc_id} - Final stock: {record.sold_final:.2f}", 
+                    gr.Dropdown(choices=self.get_records_list(product_idx, sheet_idx, page_idx)))
         except (IndexError, AttributeError):
-            return "Error: Invalid selection"
+            return "Error: Invalid selection", gr.Dropdown(choices=["No records available"])
 
     def update_record(self, product_idx: int, sheet_idx: int, page_idx: int, record_idx: int,
-                     input_val: float, output_val: float, doc_id: str, doc_type: str, dom: int) -> str:
+                     input_val: float, output_val: float, doc_id: str, doc_type: str, dom: int) -> Tuple[str, gr.Dropdown]:
         """Update existing record"""
         try:
-            record = self.db.products[product_idx].sheets[sheet_idx].pages[page_idx].records[record_idx]
+            page = self.db.products[product_idx].sheets[sheet_idx].pages[page_idx]
+            if record_idx < 0 or record_idx >= len(page.records):
+                return ("Error: Invalid record selection", 
+                        gr.Dropdown(choices=self.get_records_list(product_idx, sheet_idx, page_idx)))
+            
+            record = page.records[record_idx]
             if not doc_id.strip():
-                return "Error: Document ID cannot be empty"
+                return ("Error: Document ID cannot be empty", 
+                        gr.Dropdown(choices=self.get_records_list(product_idx, sheet_idx, page_idx)))
             
-            record.input = float(input_val)
-            record.output = float(output_val)
-            record.doc_id = doc_id.strip()
-            record.doc_type = doc_type.strip()
-            record.dom = int(dom)
-            # Recalculate sold_final
-            record.sold_final = record.sold_init + record.input - record.output
-            
-            return f"✅ Updated record: {record.doc_id} - Final stock: {record.sold_final:.2f}"
+            record.update_values(input_val, output_val, doc_id.strip(), doc_type.strip(), dom)
+            return (f"✅ Updated record: {record.doc_id} - Final stock: {record.sold_final:.2f}", 
+                    gr.Dropdown(choices=self.get_records_list(product_idx, sheet_idx, page_idx)))
         except (IndexError, AttributeError):
-            return "Error: Invalid selection"
+            return "Error: Invalid selection", gr.Dropdown(choices=["No records available"])
     
-    def delete_record(self, product_idx: int, sheet_idx: int, page_idx: int, record_idx: int) -> str:
+    def delete_record(self, product_idx: int, sheet_idx: int, page_idx: int, record_idx: int) -> Tuple[str, gr.Dropdown]:
         """Delete record"""
         try:
             page = self.db.products[product_idx].sheets[sheet_idx].pages[page_idx]
-            record = page.records.pop(record_idx)
-            page.maxrecord -= 1
-            if page.crtrecord >= page.maxrecord:
-                page.crtrecord = max(0, page.maxrecord - 1)
-            return f"🗑️ Deleted record: {record.doc_id}"
+            if record_idx < 0 or record_idx >= len(page.records):
+                return ("Error: Invalid record selection", 
+                        gr.Dropdown(choices=self.get_records_list(product_idx, sheet_idx, page_idx)))
+            
+            record_id = page.records[record_idx].doc_id
+            success = page.remove_record(record_idx)
+            
+            if success:
+                return (f"🗑️ Deleted record: {record_id}", 
+                        gr.Dropdown(choices=self.get_records_list(product_idx, sheet_idx, page_idx)))
+            else:
+                return ("Error: Could not delete record", 
+                        gr.Dropdown(choices=self.get_records_list(product_idx, sheet_idx, page_idx)))
         except (IndexError, AttributeError):
-            return "Error: Invalid selection"
+            return "Error: Invalid selection", gr.Dropdown(choices=["No records available"])
 
     def get_database_summary(self) -> str:
         """Get database summary"""
@@ -189,7 +230,15 @@ class WarehouseUI:
             total_records = sum(len(page.records) for sheet in product.sheets for page in sheet.pages)
             
             summary += f"   - Pages: {total_pages}\n"
-            summary += f"   - Records: {total_records}\n\n"
+            summary += f"   - Records: {total_records}\n"
+            
+            # Show current stock levels
+            if product.sheets:
+                for sheet in product.sheets:
+                    if sheet.pages:
+                        for page in sheet.pages:
+                            summary += f"   - Current Stock (Price ${page.price:.2f}): {page.sold_final:.2f}\n"
+            summary += "\n"
         
         return summary if self.db.products else "No products in database"
 
@@ -211,13 +260,14 @@ class WarehouseUI:
                         'Month': sheet.month,
                         'Price': page.price,
                         'Page_Init_Stock': page.sold_init,
+                        'Page_Final_Stock': page.sold_final,
                         'Doc_ID': record.doc_id,
                         'Doc_Type': record.doc_type,
                         'DOM': record.dom,
                         'Input': record.input,
                         'Output': record.output,
-                        'Initial_Stock': record.sold_init,
-                        'Final_Stock': record.sold_final
+                        'Record_Init_Stock': record.sold_init,
+                        'Record_Final_Stock': record.sold_final
                     })
         
         return pd.DataFrame(data)
@@ -263,10 +313,7 @@ def create_interface():
                 create_product_btn.click(
                     warehouse_ui.create_product,
                     inputs=[product_name, product_unit],
-                    outputs=[product_status, products_dropdown]
-                ).then(
-                    lambda: warehouse_ui.get_database_summary(),
-                    outputs=[db_summary]
+                    outputs=[product_status, products_dropdown, db_summary]
                 )
                 
                 def get_product_idx(selection):
@@ -277,16 +324,13 @@ def create_interface():
                 update_product_btn.click(
                     lambda sel, name, unit: warehouse_ui.update_product(get_product_idx(sel), name, unit),
                     inputs=[products_dropdown, update_name, update_unit],
-                    outputs=[product_status]
+                    outputs=[product_status, db_summary]
                 )
                 
                 delete_product_btn.click(
                     lambda sel: warehouse_ui.delete_product(get_product_idx(sel)),
                     inputs=[products_dropdown],
-                    outputs=[product_status, products_dropdown]
-                ).then(
-                    lambda: warehouse_ui.get_database_summary(),
-                    outputs=[db_summary]
+                    outputs=[product_status, products_dropdown, db_summary]
                 )
 
             # SHEETS TAB
@@ -320,11 +364,7 @@ def create_interface():
                 create_sheet_btn.click(
                     lambda sel, year, month: warehouse_ui.create_sheet(get_product_idx(sel), int(year), int(month)),
                     inputs=[products_for_sheets, sheet_year, sheet_month],
-                    outputs=[sheet_status]
-                ).then(
-                    lambda sel: gr.Dropdown(choices=warehouse_ui.get_sheets_list(get_product_idx(sel))),
-                    inputs=[products_for_sheets],
-                    outputs=[sheets_dropdown]
+                    outputs=[sheet_status, sheets_dropdown]
                 )
                 
                 def get_sheet_idx(selection):
@@ -335,7 +375,7 @@ def create_interface():
                 delete_sheet_btn.click(
                     lambda prod_sel, sheet_sel: warehouse_ui.delete_sheet(get_product_idx(prod_sel), get_sheet_idx(sheet_sel)),
                     inputs=[products_for_sheets, sheets_dropdown],
-                    outputs=[sheet_status]
+                    outputs=[sheet_status, sheets_dropdown]
                 )
 
             # PAGES TAB
@@ -380,7 +420,7 @@ def create_interface():
                         get_product_idx(prod_sel), get_sheet_idx(sheet_sel), price, init
                     ),
                     inputs=[products_for_pages, sheets_for_pages, page_price, page_sold_init],
-                    outputs=[page_status]
+                    outputs=[page_status, pages_dropdown]
                 )
                 
                 delete_page_btn.click(
@@ -388,7 +428,7 @@ def create_interface():
                         get_product_idx(prod_sel), get_sheet_idx(sheet_sel), get_page_idx(page_sel)
                     ),
                     inputs=[products_for_pages, sheets_for_pages, pages_dropdown],
-                    outputs=[page_status]
+                    outputs=[page_status, pages_dropdown]
                 )
 
             # RECORDS TAB
@@ -450,7 +490,7 @@ def create_interface():
                     ),
                     inputs=[products_for_records, sheets_for_records, pages_for_records, 
                            record_input, record_output, record_doc_id, record_doc_type, record_dom],
-                    outputs=[record_status]
+                    outputs=[record_status, records_dropdown]
                 )
                 
                 update_record_btn.click(
@@ -460,7 +500,7 @@ def create_interface():
                     ),
                     inputs=[products_for_records, sheets_for_records, pages_for_records, records_dropdown,
                            record_input, record_output, record_doc_id, record_doc_type, record_dom],
-                    outputs=[record_status]
+                    outputs=[record_status, records_dropdown]
                 )
                 
                 delete_record_btn.click(
@@ -468,7 +508,7 @@ def create_interface():
                         get_product_idx(prod_sel), get_sheet_idx(sheet_sel), get_page_idx(page_sel), get_record_idx(rec_sel)
                     ),
                     inputs=[products_for_records, sheets_for_records, pages_for_records, records_dropdown],
-                    outputs=[record_status]
+                    outputs=[record_status, records_dropdown]
                 )
 
             # DATA EXPORT TAB
@@ -509,13 +549,13 @@ if __name__ == "__main__":
     product1 = db.create_product("Apples", "kg")
     sheet1 = product1.create_sheet(2025, 6)
     page1 = sheet1.create_page(2.50, 100.0)
-    page1.create_record(50.0, 20.0, 100.0, "INV001", "Purchase Invoice", 15)
-    page1.create_record(30.0, 40.0, 130.0, "INV002", "Sale Invoice", 20)
+    page1.create_record(50.0, 20.0, "INV001", "Purchase Invoice", 15)
+    page1.create_record(30.0, 40.0, "INV002", "Sale Invoice", 20)
     
     product2 = db.create_product("Oranges", "kg")
     sheet2 = product2.create_sheet(2025, 6)
     page2 = sheet2.create_page(3.00, 80.0)
-    page2.create_record(25.0, 15.0, 80.0, "INV003", "Purchase Invoice", 10)
+    page2.create_record(25.0, 15.0, "INV003", "Purchase Invoice", 10)
     
     print("🏭 Warehouse Management System")
     print("================================")

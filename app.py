@@ -16,7 +16,8 @@ class WarehouseUI:
         
     def _on_database_change(self, event_type: str, data) -> None:
         """Handle database changes - could be used for real-time UI updates"""
-        pass  # For now, we'll handle updates through return values
+        #pass  # For now, we'll handle updates through return values
+        save_warehouse_db(self.db, filename="db.json", format="json")
         
     def get_products_list(self) -> List[str]:
         """Get list of product names for dropdown"""
@@ -274,6 +275,7 @@ class WarehouseUI:
         return pd.DataFrame(data)
 
 # Initialize UI
+load_warehouse_db(db, filename="db.json", format="json")
 warehouse_ui = WarehouseUI(db)
 
 def create_interface():

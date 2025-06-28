@@ -6,7 +6,7 @@ import json
 
 # Import your warehouse module
 from warehouse import DATABASE, PRODUCT, SHEET, PAGE, RECORD, db
-#from filemgr import save_warehouse_db, #load_warehouse_db
+from filemgr import save_warehouse_db, load_warehouse_db
 
 class WarehouseUI:
     def __init__(self, database: DATABASE):
@@ -17,7 +17,7 @@ class WarehouseUI:
     def _on_database_change(self, event_type: str, data) -> None:
         """Handle database changes - could be used for real-time UI updates"""
         pass  # For now, we'll handle updates through return values
-        #save_warehouse_db(self.db, filename="db.json", format="json")
+        save_warehouse_db(self.db, filename="db.json", format="json")
         
     def get_products_list(self) -> List[str]:
         """Get list of product names for dropdown"""
@@ -277,7 +277,7 @@ class WarehouseUI:
 # Initialize UI
 try:
     pass
-    #db=load_warehouse_db(filename="db.json", format="json")
+    db=load_warehouse_db(filename="db.json", format="json")
 except:
     print("File db.json not found")
 warehouse_ui = WarehouseUI(db)

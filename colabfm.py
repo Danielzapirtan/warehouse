@@ -8,13 +8,14 @@ from typing import Dict, Any, Optional, List
 # Import your warehouse classes
 from warehouse import DATABASE, PRODUCT, SHEET, PAGE, RECORD
 
+folder_path = '/content/drive/WarehouseDB'
 class ColabWarehouseDB:
     """
     Colab temporary file system integration for warehouse database with JSON and binary formats
     Designed for Google Colab environment using local temporary storage
     """
     
-    def __init__(self, folder_path: str = "/content/WarehouseDB"):
+    def __init__(self, folder_path: str = folder_path):
         """
         Initialize local file system storage
         
@@ -444,7 +445,7 @@ class ColabWarehouseDB:
             return 0
 
 # Convenience functions for easy usage
-def save_warehouse_db(db: DATABASE, filename: str = None, format: str = 'json', folder_path: str = "/content/drive/WarehouseDB") -> bool:
+def save_warehouse_db(db: DATABASE, filename: str = None, format: str = 'json', folder_path: str = folder_path) -> bool:
     """
     Quick save function for warehouse database
     
@@ -452,7 +453,7 @@ def save_warehouse_db(db: DATABASE, filename: str = None, format: str = 'json', 
         db: DATABASE object to save
         filename: Optional filename
         format: 'json' or 'binary' (default: 'json')
-        folder_path: Local folder path (default: '/content/drive/WarehouseDB')
+        folder_path: Local folder path (default: folder_path)
         
     Returns:
         bool: True if successful, False otherwise
@@ -496,12 +497,12 @@ def list_warehouse_files(folder_path: str = "/content/WarehouseDB") -> List[Dict
     colab_db = ColabWarehouseDB(folder_path)
     return colab_db.list_database_files()
 
-def cleanup_old_files(folder_path: str = "/content/drive/WarehouseDB", keep_latest: int = 5) -> bool:
+def cleanup_old_files(folder_path: str = folder_path, keep_latest: int = 5) -> bool:
     """
     Clean up old database files, keeping only the most recent ones
     
     Args:
-        folder_path: Local folder path (default: '/content/drive/WarehouseDB')
+        folder_path: Local folder path (default: folder_path)
         keep_latest: Number of most recent files to keep (default: 5)
         
     Returns:

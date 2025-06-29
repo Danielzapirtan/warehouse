@@ -4,8 +4,8 @@ FOLDER=/content/drive/MyDrive/WarehouseDB
 ALT_FOLDER=/content/warehouse
 FILENAME='db.json'
 
-if test -f $FOLDER/$FILENAME
-    true
+if test -f $FOLDER/$FILENAME; then
+   true
 else
     cp -a ALT_FOLDER/$FILENAME $FOLDER
 fi

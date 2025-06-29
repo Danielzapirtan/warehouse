@@ -465,14 +465,14 @@ def save_warehouse_db(db: DATABASE, filename: str = None, format: str = 'json', 
     else:
         return colab_db.save_database_json(db, filename)
 
-def load_warehouse_db(filename: str, format: str = 'json', folder_path: str = "/content/drive/WarehouseDB") -> Optional[DATABASE]:
+def load_warehouse_db(filename: str, format: str = 'json', folder_path: str = folder_path) -> Optional[DATABASE]:
     """
     Quick load function for warehouse database
     
     Args:
         filename: Name of the file to load
         format: 'json' or 'binary' (default: 'json')
-        folder_path: Local folder path (default: '/content/drive/WarehouseDB')
+        folder_path: Local folder path (default: folder_path)
         
     Returns:
         DATABASE object if successful, None otherwise
@@ -484,12 +484,12 @@ def load_warehouse_db(filename: str, format: str = 'json', folder_path: str = "/
     else:
         return colab_db.load_database_json(filename)
 
-def list_warehouse_files(folder_path: str = "/content/WarehouseDB") -> List[Dict[str, Any]]:
+def list_warehouse_files(folder_path: str = folder_path) -> List[Dict[str, Any]]:
     """
     Quick function to list warehouse database files
     
     Args:
-        folder_path: Local folder path (default: '/content/WarehouseDB')
+        folder_path: Local folder path (default: folder_path)
         
     Returns:
         List of file information dictionaries

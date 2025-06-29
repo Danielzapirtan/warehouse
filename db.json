@@ -1,0 +1,27 @@
+{
+  "metadata": {
+    "created_at": "2025-06-29T11:44:51.218106",
+    "version": "1.0",
+    "total_products": 2
+  },
+  "database": {
+    "crtproduct": 1,
+    "maxproduct": 2,
+    "products": [
+      {
+        "name": "Cartofi",
+        "unit": "kg",
+        "crtsheet": 0,
+        "maxsheet": 0,
+        "sheets": []
+      },
+      {
+        "name": "Lamai",
+        "unit": "kg",
+        "crtsheet": 0,
+        "maxsheet": 0,
+        "sheets": []
+      }
+    ]
+  }
+}

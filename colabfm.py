@@ -444,7 +444,7 @@ class ColabWarehouseDB:
             return 0
 
 # Convenience functions for easy usage
-def save_warehouse_db(db: DATABASE, filename: str = None, format: str = 'json', folder_path: str = "/content/WarehouseDB") -> bool:
+def save_warehouse_db(db: DATABASE, filename: str = None, format: str = 'json', folder_path: str = "/content/drive/WarehouseDB") -> bool:
     """
     Quick save function for warehouse database
     
@@ -452,7 +452,7 @@ def save_warehouse_db(db: DATABASE, filename: str = None, format: str = 'json', 
         db: DATABASE object to save
         filename: Optional filename
         format: 'json' or 'binary' (default: 'json')
-        folder_path: Local folder path (default: '/content/WarehouseDB')
+        folder_path: Local folder path (default: '/content/drive/WarehouseDB')
         
     Returns:
         bool: True if successful, False otherwise
@@ -464,14 +464,14 @@ def save_warehouse_db(db: DATABASE, filename: str = None, format: str = 'json', 
     else:
         return colab_db.save_database_json(db, filename)
 
-def load_warehouse_db(filename: str, format: str = 'json', folder_path: str = "/content/WarehouseDB") -> Optional[DATABASE]:
+def load_warehouse_db(filename: str, format: str = 'json', folder_path: str = "/content/drive/WarehouseDB") -> Optional[DATABASE]:
     """
     Quick load function for warehouse database
     
     Args:
         filename: Name of the file to load
         format: 'json' or 'binary' (default: 'json')
-        folder_path: Local folder path (default: '/content/WarehouseDB')
+        folder_path: Local folder path (default: '/content/drive/WarehouseDB')
         
     Returns:
         DATABASE object if successful, None otherwise
@@ -496,12 +496,12 @@ def list_warehouse_files(folder_path: str = "/content/WarehouseDB") -> List[Dict
     colab_db = ColabWarehouseDB(folder_path)
     return colab_db.list_database_files()
 
-def cleanup_old_files(folder_path: str = "/content/WarehouseDB", keep_latest: int = 5) -> bool:
+def cleanup_old_files(folder_path: str = "/content/drive/WarehouseDB", keep_latest: int = 5) -> bool:
     """
     Clean up old database files, keeping only the most recent ones
     
     Args:
-        folder_path: Local folder path (default: '/content/WarehouseDB')
+        folder_path: Local folder path (default: '/content/drive/WarehouseDB')
         keep_latest: Number of most recent files to keep (default: 5)
         
     Returns:

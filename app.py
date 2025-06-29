@@ -279,7 +279,8 @@ try:
     pass
     db=load_warehouse_db(filename="db.json", format="json")
 except:
-    db=load_warehouse_db(filename="db.json", format="json", folder_path="/content/warehouse")
+    pass
+    #db=load_warehouse_db(filename="db.json", format="json", folder_path="/content/warehouse")
 warehouse_ui = WarehouseUI(db)
 
 def create_interface():

@@ -277,9 +277,9 @@ class WarehouseUI:
 # Initialize UI
 try:
     pass
-    #db=load_warehouse_db(filename="db.json", format="json")
+    db=load_warehouse_db(filename="db.json", format="json")
 except:
-    print("File db.json not found")
+    db=load_warehouse_db(filename="db.json", format="json", folder="/content/warehouse")
 warehouse_ui = WarehouseUI(db)
 
 def create_interface():

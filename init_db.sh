@@ -7,5 +7,5 @@ FILENAME='db.json'
 if test -f $FOLDER/$FILENAME; then
    true
 else
-    cp -a ALT_FOLDER/$FILENAME $FOLDER
+    cp -a $ALT_FOLDER/$FILENAME $FOLDER
 fi

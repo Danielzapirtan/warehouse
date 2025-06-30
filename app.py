@@ -653,4 +653,4 @@ if __name__ == "__main__":
     
     print("🏭 Warehouse Management System")
     print("================================")
-    launch_app(share=True)
+    launch_app()

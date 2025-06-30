@@ -275,11 +275,7 @@ class WarehouseUI:
         return pd.DataFrame(data)
 
 # Initialize UI
-try:
-    if not db:
-        db = load_warehouse_db()
-except:
-    pass
+db = load_warehouse_db()
 warehouse_ui = WarehouseUI(db)
 
 def create_interface():

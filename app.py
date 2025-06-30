@@ -638,8 +638,6 @@ def create_interface():
         </div>
         """)
     
-    return app
-
 def launch_app(share=False, debug=False, server_name="127.0.0.1", server_port=7860):
     """Launch the Warehouse Management UI"""
     app = create_interface()

@@ -1,1 +1,2 @@
 gradio
+psycopgn-binary2.9.7

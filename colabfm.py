@@ -8,7 +8,7 @@ from typing import Dict, Any, Optional, List
 # Import your warehouse classes
 from warehouse import DATABASE, PRODUCT, SHEET, PAGE, RECORD
 
-folder_path = '/content/drive/MyDrive/WarehouseDB'
+folder_path = './WarehouseDB'
 class ColabWarehouseDB:
     """
     Colab temporary file system integration for warehouse database with JSON and binary formats

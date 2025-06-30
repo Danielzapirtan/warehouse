@@ -640,17 +640,32 @@ def create_interface():
     
     return app
 
-# Function to launch the app
-def launch_app(share=False, debug=False):
+def launch_app(share=False, debug=False, server_name="127.0.0.1", server_port=7860):
     """Launch the Warehouse Management UI"""
     app = create_interface()
-    app.launch(share=share, debug=debug, height=800,host='0.0.0.0',port=10000)
+    app.launch(
+        share=share, 
+        debug=debug, 
+        height=800,
+        server_name=server_name,
+        server_port=server_port
+    )
     return app
 
-# For Colab usage
+# For Render deployment
 if __name__ == "__main__":
-    # Create some sample data for demonstration
+    import os
     
     print("🏭 Warehouse Management System")
     print("================================")
-    launch_app(share=True)
+    
+    # Get port from environment variable (Render sets this automatically)
+    port = int(os.environ.get("PORT", 10000))
+    
+    # Launch with host=0.0.0.0 and the specified port for Render
+    launch_app(
+        share=False,  # Don't use share=True on Render
+        debug=False,  # Disable debug in production
+        server_name="0.0.0.0",  # Accept connections from any IP
+        server_port=port  # Use the port specified by Render
+    )

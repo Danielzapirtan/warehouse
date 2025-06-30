@@ -644,7 +644,7 @@ def create_interface():
 def launch_app(share=False, debug=False):
     """Launch the Warehouse Management UI"""
     app = create_interface()
-    app.launch(share=share, debug=debug, height=800)
+    app.launch(share=share, debug=debug, height=800,host='0.0.0.0',port=10000)
     return app
 
 # For Colab usage

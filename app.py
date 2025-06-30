@@ -6,7 +6,7 @@ import json
 
 # Import your warehouse module
 from warehouse import DATABASE, PRODUCT, SHEET, PAGE, RECORD, db
-from sql_db import save_warehouse_db, load_warehouse_db
+from colabfm import save_warehouse_db, load_warehouse_db
 
 class WarehouseUI:
     def __init__(self, database: DATABASE):
@@ -276,7 +276,8 @@ class WarehouseUI:
 
 # Initialize UI
 try:
-    db = load_warehouse_db()
+    if !db.maxproduct:
+        db = load_warehouse_db()
 except:
     pass
 warehouse_ui = WarehouseUI(db)

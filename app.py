@@ -275,7 +275,7 @@ class WarehouseUI:
         return pd.DataFrame(data)
 
 # Initialize UI
-db = load_warehouse_db("json_db")
+db = load_warehouse_db("warehouse_db")
 warehouse_ui = WarehouseUI(db)
 
 def create_interface():

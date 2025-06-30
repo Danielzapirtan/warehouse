@@ -10,7 +10,7 @@ from colabfm import save_warehouse_db, load_warehouse_db
 
 class WarehouseUI:
     def __init__(self, database: DATABASE):
-        self.db = database
+        self.db = load_warehouse_db("warehouse_db")
         # Set up observer to refresh UI when data changes
         self.db.add_observer(self._on_database_change)
         
@@ -274,8 +274,6 @@ class WarehouseUI:
         
         return pd.DataFrame(data)
 
-# Initialize UI
-db = load_warehouse_db("warehouse_db")
 warehouse_ui = WarehouseUI(db)
 
 def create_interface():

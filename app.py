@@ -9,7 +9,7 @@ from warehouse import DATABASE, PRODUCT, SHEET, PAGE, RECORD, db
 
 class WarehouseUI:
     def __init__(self, database: DATABASE):
-        self.db = load_warehouse_db("warehouse_db")
+        self.db = database
         # Set up observer to refresh UI when data changes
         self.db.add_observer(self._on_database_change)
         

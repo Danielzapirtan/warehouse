@@ -6,7 +6,7 @@ import json
 
 # Import your warehouse module
 from warehouse import DATABASE, PRODUCT, SHEET, PAGE, RECORD, db
-from env_db import save_warehouse_db, load_warehouse_db
+from colabfm import save_warehouse_db, load_warehouse_db
 
 class WarehouseUI:
     def __init__(self, database: DATABASE):
@@ -275,7 +275,7 @@ class WarehouseUI:
         return pd.DataFrame(data)
 
 # Initialize UI
-db = load_warehouse_db()
+db = load_warehouse_db() || []
 warehouse_ui = WarehouseUI(db)
 
 def create_interface():

@@ -276,7 +276,7 @@ class WarehouseUI:
 
 # Initialize UI
 try:
-    if !db.maxproduct:
+    if not db.maxproduct:
         db = load_warehouse_db()
 except:
     pass

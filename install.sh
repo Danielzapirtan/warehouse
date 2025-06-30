@@ -22,7 +22,7 @@ cd warehouse
 
 # Handle database setup
 FOLDER=/home/userland/WarehouseDB
-ALT_FOLDER=./warehouse
+ALT_FOLDER=.
 FILENAME='db.json'
 
 echo "🗄️  Setting up database..."

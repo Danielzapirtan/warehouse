@@ -37,7 +37,7 @@ class WarehouseUI:
             data: Data associated with the change
         """
         # For now, we'll handle updates through return values
-        save_warehouse_db(self.db, filename="db.json", format="json")
+        save_warehouse_db(self.db, filename="db.json", format_type="json")
 
     def get_products_list(self) -> List[str]:
         """Get list of product names for dropdown.
@@ -1075,11 +1075,11 @@ def launch_app(share: bool = False, debug: bool = False) -> gr.Blocks:
     """
     # Initialize UI
     try:
-        db = load_warehouse_db(filename="db.json", format="json")
+        db = load_warehouse_db(filename="db.json", format_type="json")
     except FileNotFoundError:
         try:
             db = load_warehouse_db(
-                filename="db.json", format="json", folder_path='/content/warehouse')
+                filename="db.json", format_type="json", folder_path='/content/warehouse')
         except FileNotFoundError:
             db = DATABASE()  # Create empty database if file not found
 

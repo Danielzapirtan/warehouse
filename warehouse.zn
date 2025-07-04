@@ -1,13 +1,15 @@
 #! /usr/local/bin/zenith
 
-ui = UI(gui)
+use requirements
+
+ui = UI(flask)
 app = APP()
 
 struct database:
     struct product:
-        & database owner
+        database owner
         struct sheet:
-            & product owner
+            product owner
             page pages[]
             rational price
             rational stock    
@@ -15,4 +17,6 @@ struct database:
         str name
         str unit
     product products[]
+
+
 

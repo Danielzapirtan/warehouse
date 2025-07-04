@@ -1,1 +1,16 @@
-ui = UI("gui")
+ui = UI(gui)
+app = APP()
+
+struct database:
+    struct product:
+        & database owner
+        struct sheet:
+            & product owner
+            page pages[]
+            rational price
+            rational stock    
+        sheet sheets[]
+        str name
+        str unit
+    product products[]
+

@@ -1,0 +1,20 @@
+{
+  "products": [
+    {
+      "name": "cartofi",
+      "measure_unit": "kg",
+      "sheets": [
+        {
+          "year": 2025,
+          "month": 7,
+          "pages": []
+        }
+      ]
+    },
+    {
+      "name": "ceapă",
+      "measure_unit": "kg",
+      "sheets": []
+    }
+  ]
+}

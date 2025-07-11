@@ -2,7 +2,7 @@
 
 cd $HOME
 sudo apt update
-sudo apt install git python3-pip
+sudo apt install -y git python3-pip
 rm -rf warehouse
 git clone https://github.com/Danielzapirtan/warehouse.git
 cd $HOME/warehouse

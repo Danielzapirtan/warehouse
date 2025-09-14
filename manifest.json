@@ -1,8 +1,8 @@
 {
-  "name": "Gestiune Depozit",
-  "short_name": "GestiuneDep",
+  "name": "warehouse",
+  "short_name": "warehouse",
   "description": "Aplicație pentru gestionarea stocurilor și evidența depozitului",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#f8f9fc",
   "theme_color": "#4e73df",

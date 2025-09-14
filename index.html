@@ -1,145 +1,1640 @@
 <!DOCTYPE html>
 <html lang="ro">
 <head>
-<meta charset="UTF-8">
-<title>Gestiune Depozit</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-body { font-family: sans-serif; margin: 1em; }
-nav button { margin: 0.2em; }
-.hidden { display: none; }
-table { border-collapse: collapse; width: 100%; margin-top: 1em; }
-th, td { border: 1px solid #999; padding: 0.4em; text-align: center; }
-</style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestiune Depozit</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #858796;
+            --success-color: #1cc88a;
+            --info-color: #36b9cc;
+            --warning-color: #f6c23e;
+            --danger-color: #e74a3b;
+            --light-color: #f8f9fc;
+            --dark-color: #5a5c69;
+        }
+        
+        body {
+            background-color: #f8f9fc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
+            background-color: #f8f9fc;
+            border-bottom: 1px solid #e3e6f0;
+            font-weight: bold;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+        
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .table th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .search-box {
+            position: relative;
+        }
+        
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 12px;
+            color: #b7b9cc;
+        }
+        
+        .search-box input {
+            padding-left: 40px;
+        }
+        
+        .nav-tabs .nav-link.active {
+            font-weight: bold;
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
+        }
+        
+        .nav-tabs .nav-link {
+            color: var(--secondary-color);
+        }
+        
+        .pending-delete {
+            background-color: #fff3f3;
+            border-left: 4px solid var(--danger-color);
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+        
+        .stats-box {
+            text-align: center;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: white;
+        }
+        
+        .stats-box.products {
+            background-color: var(--primary-color);
+        }
+        
+        .stats-box.sheets {
+            background-color: var(--info-color);
+        }
+        
+        .stats-box.pages {
+            background-color: var(--success-color);
+        }
+        
+        .stats-box.records {
+            background-color: var(--warning-color);
+        }
+        
+        .stats-number {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .btn-responsive {
+                margin-top: 10px;
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-warehouse me-2"></i>Gestiune Depozit
+            </a>
+            <div class="ms-auto">
+                <select id="language-selector" class="form-select">
+                    <option value="ro" selected>Română</option>
+                    <option value="en">English</option>
+                </select>
+            </div>
+        </div>
+    </nav>
 
-<h1>📦 Gestiune Depozit</h1>
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-box products">
+                    <i class="fas fa-boxes fa-2x mb-2"></i>
+                    <div class="stats-number" id="products-count">0</div>
+                    <div>Produse</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-box sheets">
+                    <i class="fas fa-file-alt fa-2x mb-2"></i>
+                    <div class="stats-number" id="sheets-count">0</div>
+                    <div>Foi</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-box pages">
+                    <i class="fas fa-file fa-2x mb-2"></i>
+                    <div class="stats-number" id="pages-count">0</div>
+                    <div>Pagini</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-box records">
+                    <i class="fas fa-list-alt fa-2x mb-2"></i>
+                    <div class="stats-number" id="records-count">0</div>
+                    <div>Înregistrări</div>
+                </div>
+            </div>
+        </div>
 
-<nav>
-  <button onclick="showTab('products')">Produse</button>
-  <button onclick="showTab('sheets')">Fișe</button>
-  <button onclick="showTab('pages')">Pagini</button>
-  <button onclick="showTab('records')">Înregistrări</button>
-</nav>
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="products-tab" data-bs-toggle="tab" data-bs-target="#products" type="button" role="tab">Produse</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="sheets-tab" data-bs-toggle="tab" data-bs-target="#sheets" type="button" role="tab">Foi</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pages-tab" data-bs-toggle="tab" data-bs-target="#pages" type="button" role="tab">Pagini</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="records-tab" data-bs-toggle="tab" data-bs-target="#records" type="button" role="tab">Înregistrări</button>
+            </li>
+        </ul>
 
-<div id="products" class="tab"></div>
-<div id="sheets" class="tab hidden"></div>
-<div id="pages" class="tab hidden"></div>
-<div id="records" class="tab hidden"></div>
+        <div class="tab-content" id="myTabContent">
+            <!-- Tab Produse -->
+            <div class="tab-pane fade show active" id="products" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <i class="fas fa-search me-2"></i>Căutare Produse
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="search-box">
+                                    <i class="fas fa-search"></i>
+                                    <input type="text" id="product-search" class="form-control" placeholder="Căutare...">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-<script>
-let db=JSON.parse(localStorage.getItem('warehouseDB')||'{"products":[]}');
-let selectedProduct=-1,selectedSheet=-1,selectedPage=-1;
-function saveDB(){ localStorage.setItem('warehouseDB',JSON.stringify(db)); }
-function showTab(id){ document.querySelectorAll('.tab').forEach(t=>t.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); render(); }
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-plus-circle me-2"></i>Adaugă Produs Nou
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <input type="text" id="product-name" class="form-control" placeholder="Nume Produs">
+                            </div>
+                            <div class="col-md-5">
+                                <input type="text" id="measure-unit" class="form-control" placeholder="Unitate Măsură">
+                            </div>
+                            <div class="col-md-2">
+                                <button id="add-product-btn" class="btn btn-primary w-100">
+                                    <i class="fas fa-plus me-1"></i> Adaugă
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-function addProduct(){
-  const n=document.getElementById('prodName').value.trim();
-  const u=document.getElementById('prodUnit').value.trim();
-  if(n&&u){ db.products.push({name:n,measure_unit:u,sheets:[]}); saveDB(); render(); }
-}
-function deleteProduct(i){ if(confirm("Ștergi produsul?")){ db.products.splice(i,1); saveDB(); render(); } }
-function exportPDF(){
-  const { jsPDF }=window.jspdf; const doc=new jsPDF();
-  doc.text("Produse",10,10); db.products.forEach((p,i)=>doc.text(`${i+1}. ${p.name} (${p.measure_unit})`,10,20+10*i));
-  doc.save("produse.pdf");
-}
-function renderProducts(){
-  let h=`<h2>Produse</h2>
-  <input id="prodName" placeholder="Nume produs">
-  <input id="prodUnit" placeholder="Unitate măsură">
-  <button onclick="addProduct()">Adaugă Produs</button>
-  <button onclick="exportPDF()">Descarcă PDF</button>`;
-  if(db.products.length){
-    h+=`<table><tr><th>#</th><th>Nume</th><th>Unitate</th><th>Fișe</th><th>Șterge</th></tr>`;
-    db.products.forEach((p,i)=>h+=`<tr><td>${i+1}</td><td>${p.name}</td><td>${p.measure_unit}</td>
-      <td><button onclick="selectProduct(${i})">Fișe</button></td>
-      <td><button onclick="deleteProduct(${i})">X</button></td></tr>`);
-    h+="</table>";
-  }
-  document.getElementById('products').innerHTML=h;
-}
-function selectProduct(i){ selectedProduct=i; showTab('sheets'); }
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-boxes me-2"></i>Lista Produse</span>
+                        <button id="download-products-pdf" class="btn btn-sm btn-success">
+                            <i class="fas fa-download me-1"></i> Descarcă PDF
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Nume Produs</th>
+                                        <th>Unitate Măsură</th>
+                                        <th>Număr Foi</th>
+                                        <th>Acțiuni</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="products-table-body">
+                                    <!-- Aici vor fi afișate produsele -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-function addSheet(){
-  const n=document.getElementById('sheetName').value.trim();
-  if(n&&selectedProduct>=0){ db.products[selectedProduct].sheets.push({name:n,pages:[]}); saveDB(); render(); }
-}
-function deleteSheet(i){ if(confirm("Ștergi fișa?")){ db.products[selectedProduct].sheets.splice(i,1); saveDB(); render(); } }
-function renderSheets(){
-  if(selectedProduct<0){ document.getElementById('sheets').innerHTML="<p>Selectează un produs.</p>"; return; }
-  const prod=db.products[selectedProduct];
-  let h=`<h2>Fișe pentru ${prod.name}</h2>
-  <input id="sheetName" placeholder="Nume fișă">
-  <button onclick="addSheet()">Adaugă Fișă</button>
-  <button onclick="showTab('products')">Înapoi la Produse</button>`;
-  if(prod.sheets.length){
-    h+=`<table><tr><th>#</th><th>Nume fișă</th><th>Pagini</th><th>Șterge</th></tr>`;
-    prod.sheets.forEach((s,i)=>h+=`<tr><td>${i+1}</td><td>${s.name}</td>
-      <td><button onclick="selectSheet(${i})">Pagini</button></td>
-      <td><button onclick="deleteSheet(${i})">X</button></td></tr>`);
-    h+="</table>";
-  }
-  document.getElementById('sheets').innerHTML=h;
-}
-function selectSheet(i){ selectedSheet=i; showTab('pages'); }
+            <!-- Tab Foi -->
+            <div class="tab-pane fade" id="sheets" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <i class="fas fa-tasks me-2"></i>Selectare Produs
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <select id="sheet-product-select" class="form-select">
+                                    <option value="">Selectează produs</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-function addPage(){
-  const n=document.getElementById('pageName').value.trim();
-  if(n&&selectedProduct>=0&&selectedSheet>=0){ db.products[selectedProduct].sheets[selectedSheet].pages.push({name:n,records:[]}); saveDB(); render(); }
-}
-function deletePage(i){ if(confirm("Ștergi pagina?")){ db.products[selectedProduct].sheets[selectedSheet].pages.splice(i,1); saveDB(); render(); } }
-function renderPages(){
-  if(selectedProduct<0||selectedSheet<0){ document.getElementById('pages').innerHTML="<p>Selectează o fișă.</p>"; return; }
-  const sheet=db.products[selectedProduct].sheets[selectedSheet];
-  let h=`<h2>Pagini pentru ${sheet.name}</h2>
-  <input id="pageName" placeholder="Nume pagină">
-  <button onclick="addPage()">Adaugă Pagină</button>
-  <button onclick="showTab('sheets')">Înapoi la Fișe</button>`;
-  if(sheet.pages.length){
-    h+=`<table><tr><th>#</th><th>Nume pagină</th><th>Înregistrări</th><th>Șterge</th></tr>`;
-    sheet.pages.forEach((p,i)=>h+=`<tr><td>${i+1}</td><td>${p.name}</td>
-      <td><button onclick="selectPage(${i})">Înregistrări</button></td>
-      <td><button onclick="deletePage(${i})">X</button></td></tr>`);
-    h+="</table>";
-  }
-  document.getElementById('pages').innerHTML=h;
-}
-function selectPage(i){ selectedPage=i; showTab('records'); }
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-plus-circle me-2"></i>Adaugă Foaie Nouă
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <input type="number" id="sheet-year" class="form-control" placeholder="An" min="2000" max="2100">
+                            </div>
+                            <div class="col-md-4">
+                                <select id="sheet-month" class="form-select">
+                                    <option value="">Lună</option>
+                                    <option value="1">Ianuarie</option>
+                                    <option value="2">Februarie</option>
+                                    <option value="3">Martie</option>
+                                    <option value="4">Aprilie</option>
+                                    <option value="5">Mai</option>
+                                    <option value="6">Iunie</option>
+                                    <option value="7">Iulie</option>
+                                    <option value="8">August</option>
+                                    <option value="9">Septembrie</option>
+                                    <option value="10">Octombrie</option>
+                                    <option value="11">Noiembrie</option>
+                                    <option value="12">Decembrie</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button id="add-sheet-btn" class="btn btn-primary w-100">
+                                    <i class="fas fa-plus me-1"></i> Adaugă Foaie
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-function addRecord(){
-  const d=document.getElementById('recDate').value;
-  const q=+document.getElementById('recQty').value;
-  const obs=document.getElementById('recObs').value;
-  if(d&&q&&selectedProduct>=0&&selectedSheet>=0&&selectedPage>=0){
-    db.products[selectedProduct].sheets[selectedSheet].pages[selectedPage].records.push({date:d,qty:q,obs}); saveDB(); render();
-  }
-}
-function deleteRecord(i){ if(confirm("Ștergi înregistrarea?")){ db.products[selectedProduct].sheets[selectedSheet].pages[selectedPage].records.splice(i,1); saveDB(); render(); } }
-function renderRecords(){
-  if(selectedProduct<0||selectedSheet<0||selectedPage<0){ document.getElementById('records').innerHTML="<p>Selectează o pagină.</p>"; return; }
-  const page=db.products[selectedProduct].sheets[selectedSheet].pages[selectedPage];
-  let h=`<h2>Înregistrări pentru ${page.name}</h2>
-  <input type="date" id="recDate">
-  <input type="number" id="recQty" placeholder="Cantitate">
-  <input id="recObs" placeholder="Observații">
-  <button onclick="addRecord()">Adaugă Înregistrare</button>
-  <button onclick="showTab('pages')">Înapoi la Pagini</button>`;
-  if(page.records.length){
-    h+=`<table><tr><th>#</th><th>Data</th><th>Cantitate</th><th>Obs</th><th>Șterge</th></tr>`;
-    page.records.forEach((r,i)=>h+=`<tr><td>${i+1}</td><td>${r.date}</td><td>${r.qty}</td><td>${r.obs}</td>
-      <td><button onclick="deleteRecord(${i})">X</button></td></tr>`);
-    h+="</table>";
-  }
-  document.getElementById('records').innerHTML=h;
-}
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-file-alt me-2"></i>Lista Foi</span>
+                        <button id="download-sheets-pdf" class="btn btn-sm btn-success">
+                            <i class="fas fa-download me-1"></i> Descarcă PDF
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>An</th>
+                                        <th>Lună</th>
+                                        <th>Număr Pagini</th>
+                                        <th>Acțiuni</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sheets-table-body">
+                                    <!-- Aici vor fi afișate foile -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-function render(){
-  renderProducts(); renderSheets(); renderPages(); renderRecords();
-}
-render();
-</script>
+            <!-- Tab Pagini -->
+            <div class="tab-pane fade" id="pages" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <i class="fas fa-tasks me-2"></i>Selectare Produs și Foaie
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <select id="page-product-select" class="form-select">
+                                    <option value="">Selectează produs</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <select id="page-sheet-select" class="form-select">
+                                    <option value="">Selectează foaie</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-plus-circle me-2"></i>Adaugă Pagină Nouă
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <input type="number" id="page-unit-price" class="form-control" placeholder="Preț Unitar" min="0" step="0.01">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="number" id="page-initial-stock" class="form-control" placeholder="Stoc Inițial" min="0" step="0.01">
+                            </div>
+                            <div class="col-md-4">
+                                <button id="add-page-btn" class="btn btn-primary w-100">
+                                    <i class="fas fa-plus me-1"></i> Adaugă Pagină
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-file me-2"></i>Lista Pagini</span>
+                        <button id="download-pages-pdf" class="btn btn-sm btn-success">
+                            <i class="fas fa-download me-1"></i> Descarcă PDF
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Preț Unitar</th>
+                                        <th>Stoc Inițial</th>
+                                        <th>Număr Înregistrări</th>
+                                        <th>Acțiuni</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pages-table-body">
+                                    <!-- Aici vor fi afișate paginile -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Înregistrări -->
+            <div class="tab-pane fade" id="records" role="tabpanel">
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <i class="fas fa-tasks me-2"></i>Selectare Produs, Foaie și Pagină
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <select id="record-product-select" class="form-select">
+                                    <option value="">Selectează produs</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select id="record-sheet-select" class="form-select">
+                                    <option value="">Selectează foaie</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select id="record-page-select" class="form-select">
+                                    <option value="">Selectează pagină</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-plus-circle me-2"></i>Adaugă Înregistrare Nouă
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-1">
+                                <input type="number" id="record-day" class="form-control" placeholder="Zi" min="1" max="31">
+                            </div>
+                            <div class="col-md-2">
+                                <input type="text" id="record-doc-id" class="form-control" placeholder="ID Document">
+                            </div>
+                            <div class="col-md-2">
+                                <input type="text" id="record-doc-type" class="form-control" placeholder="Tip Document">
+                            </div>
+                            <div class="col-md-1">
+                                <input type="number" id="record-input" class="form-control" placeholder="Intrare" min="0" step="0.01">
+                            </div>
+                            <div class="col-md-1">
+                                <input type="number" id="record-output" class="form-control" placeholder="Ieșire" min="0" step="0.01">
+                            </div>
+                            <div class="col-md-3">
+                                <input type="text" id="record-comment" class="form-control" placeholder="Comentariu">
+                            </div>
+                            <div class="col-md-2">
+                                <button id="add-record-btn" class="btn btn-primary w-100">
+                                    <i class="fas fa-plus me-1"></i> Adaugă
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-list-alt me-2"></i>Lista Înregistrări</span>
+                        <button id="download-records-pdf" class="btn btn-sm btn-success">
+                            <i class="fas fa-download me-1"></i> Descarcă PDF
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Zi</th>
+                                        <th>ID Document</th>
+                                        <th>Tip Document</th>
+                                        <th>Stoc Inițial</th>
+                                        <th>Intrare</th>
+                                        <th>Ieșire</th>
+                                        <th>Stoc Final</th>
+                                        <th>Comentariu</th>
+                                        <th>Acțiuni</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="records-table-body">
+                                    <!-- Aici vor fi afișate înregistrările -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Definirea claselor și structurilor de date
+        class Record {
+            constructor(day, doc_id, doc_type, input = 0.0, output = 0.0, comment = "", initial_stock = 0.0, final_stock = 0.0) {
+                this.day = day;
+                this.doc_id = doc_id;
+                this.doc_type = doc_type;
+                this.input = input;
+                this.output = output;
+                this.comment = comment;
+                this.initial_stock = initial_stock;
+                this.final_stock = final_stock;
+            }
+        }
+
+        class Page {
+            constructor(unit_price, initial_stock, records = []) {
+                this.unit_price = unit_price;
+                this.initial_stock = initial_stock;
+                this.records = records;
+            }
+        }
+
+        class Sheet {
+            constructor(year, month, pages = []) {
+                this.year = year;
+                this.month = month;
+                this.pages = pages;
+            }
+        }
+
+        class Product {
+            constructor(name, measure_unit, sheets = []) {
+                this.name = name;
+                this.measure_unit = measure_unit;
+                this.sheets = sheets;
+            }
+        }
+
+        class Database {
+            constructor(products = []) {
+                this.products = products;
+            }
+        }
+
+        // Manager pentru baza de date (localStorage)
+        class WarehouseManager {
+            constructor() {
+                this.storageKey = 'warehouse_db';
+                this.observers = [];
+                this.loadData();
+            }
+
+            loadData() {
+                const data = localStorage.getItem(this.storageKey);
+                if (data) {
+                    const parsed = JSON.parse(data);
+                    this.db = this._dictToDb(parsed);
+                } else {
+                    this.db = new Database();
+                    this.saveData();
+                }
+            }
+
+            saveData() {
+                localStorage.setItem(this.storageKey, JSON.stringify(this._dbToDict(this.db)));
+                this.notifyObservers();
+            }
+
+            attach(observer) {
+                this.observers.push(observer);
+            }
+
+            notifyObservers() {
+                this.observers.forEach(observer => observer());
+            }
+
+            _dbToDict(db) {
+                return {
+                    products: db.products.map(p => ({
+                        name: p.name,
+                        measure_unit: p.measure_unit,
+                        sheets: p.sheets.map(s => ({
+                            year: s.year,
+                            month: s.month,
+                            pages: s.pages.map(pg => ({
+                                unit_price: pg.unit_price,
+                                initial_stock: pg.initial_stock,
+                                records: pg.records.map(r => ({
+                                    day: r.day,
+                                    doc_id: r.doc_id,
+                                    doc_type: r.doc_type,
+                                    input: r.input,
+                                    output: r.output,
+                                    comment: r.comment,
+                                    initial_stock: r.initial_stock,
+                                    final_stock: r.final_stock
+                                }))
+                            }))
+                        }))
+                    }))
+                };
+            }
+
+            _dictToDb(data) {
+                const products = data.products.map(p => new Product(
+                    p.name,
+                    p.measure_unit,
+                    p.sheets.map(s => new Sheet(
+                        s.year,
+                        s.month,
+                        s.pages.map(pg => new Page(
+                            pg.unit_price,
+                            pg.initial_stock,
+                            pg.records.map(r => new Record(
+                                r.day,
+                                r.doc_id,
+                                r.doc_type,
+                                r.input,
+                                r.output,
+                                r.comment,
+                                r.initial_stock,
+                                r.final_stock
+                            ))
+                        ))
+                    ))
+                ));
+                return new Database(products);
+            }
+
+            addProduct(name, measure_unit) {
+                this.db.products.push(new Product(name, measure_unit));
+                this.saveData();
+            }
+
+            deleteProduct(index) {
+                if (index >= 0 && index < this.db.products.length) {
+                    this.db.products.splice(index, 1);
+                    this.saveData();
+                }
+            }
+
+            addSheet(product_idx, year, month) {
+                if (product_idx >= 0 && product_idx < this.db.products.length) {
+                    this.db.products[product_idx].sheets.push(new Sheet(year, month));
+                    this.saveData();
+                }
+            }
+
+            deleteSheet(product_idx, sheet_idx) {
+                if (product_idx >= 0 && product_idx < this.db.products.length &&
+                    sheet_idx >= 0 && sheet_idx < this.db.products[product_idx].sheets.length) {
+                    this.db.products[product_idx].sheets.splice(sheet_idx, 1);
+                    this.saveData();
+                }
+            }
+
+            addPage(product_idx, sheet_idx, unit_price, initial_stock) {
+                if (product_idx >= 0 && product_idx < this.db.products.length &&
+                    sheet_idx >= 0 && sheet_idx < this.db.products[product_idx].sheets.length) {
+                    this.db.products[product_idx].sheets[sheet_idx].pages.push(new Page(unit_price, initial_stock));
+                    this.saveData();
+                }
+            }
+
+            deletePage(product_idx, sheet_idx, page_idx) {
+                if (product_idx >= 0 && product_idx < this.db.products.length &&
+                    sheet_idx >= 0 && sheet_idx < this.db.products[product_idx].sheets.length &&
+                    page_idx >= 0 && page_idx < this.db.products[product_idx].sheets[sheet_idx].pages.length) {
+                    this.db.products[product_idx].sheets[sheet_idx].pages.splice(page_idx, 1);
+                    this.saveData();
+                }
+            }
+
+            addRecord(product_idx, sheet_idx, page_idx, record) {
+                if (product_idx >= 0 && product_idx < this.db.products.length &&
+                    sheet_idx >= 0 && sheet_idx < this.db.products[product_idx].sheets.length &&
+                    page_idx >= 0 && page_idx < this.db.products[product_idx].sheets[sheet_idx].pages.length) {
+                    
+                    const page = this.db.products[product_idx].sheets[sheet_idx].pages[page_idx];
+                    
+                    if (page.records.length > 0) {
+                        record.initial_stock = page.records[page.records.length - 1].final_stock;
+                    } else {
+                        record.initial_stock = page.initial_stock;
+                    }
+                    
+                    record.final_stock = record.initial_stock + record.input - record.output;
+                    page.records.push(record);
+                    this.saveData();
+                }
+            }
+
+            deleteRecord(product_idx, sheet_idx, page_idx, record_idx) {
+                if (product_idx >= 0 && product_idx < this.db.products.length &&
+                    sheet_idx >= 0 && sheet_idx < this.db.products[product_idx].sheets.length &&
+                    page_idx >= 0 && page_idx < this.db.products[product_idx].sheets[sheet_idx].pages.length &&
+                    record_idx >= 0 && record_idx < this.db.products[product_idx].sheets[sheet_idx].pages[page_idx].records.length) {
+                    
+                    this.db.products[product_idx].sheets[sheet_idx].pages[page_idx].records.splice(record_idx, 1);
+                    this.recalculateStocks(product_idx, sheet_idx, page_idx);
+                    this.saveData();
+                }
+            }
+
+            recalculateStocks(product_idx, sheet_idx, page_idx) {
+                if (product_idx >= 0 && product_idx < this.db.products.length &&
+                    sheet_idx >= 0 && sheet_idx < this.db.products[product_idx].sheets.length &&
+                    page_idx >= 0 && page_idx < this.db.products[product_idx].sheets[sheet_idx].pages.length) {
+                    
+                    const page = this.db.products[product_idx].sheets[sheet_idx].pages[page_idx];
+                    
+                    for (let i = 0; i < page.records.length; i++) {
+                        if (i === 0) {
+                            page.records[i].initial_stock = page.initial_stock;
+                        } else {
+                            page.records[i].initial_stock = page.records[i-1].final_stock;
+                        }
+                        page.records[i].final_stock = page.records[i].initial_stock + page.records[i].input - page.records[i].output;
+                    }
+                }
+            }
+
+            searchProducts(pattern) {
+                const results = [];
+                try {
+                    const regex = new RegExp(pattern, 'i');
+                    for (let i = 0; i < this.db.products.length; i++) {
+                        if (regex.test(this.db.products[i].name)) {
+                            results.push({ index: i, product: this.db.products[i] });
+                        }
+                    }
+                } catch (e) {
+                    console.error("Eroare la căutare:", e);
+                }
+                return results;
+            }
+
+            // Metode pentru obținerea statisticilor
+            getProductsCount() {
+                return this.db.products.length;
+            }
+
+            getSheetsCount() {
+                return this.db.products.reduce((total, product) => total + product.sheets.length, 0);
+            }
+
+            getPagesCount() {
+                return this.db.products.reduce((total, product) => 
+                    total + product.sheets.reduce((sheetTotal, sheet) => 
+                        sheetTotal + sheet.pages.length, 0), 0);
+            }
+
+            getRecordsCount() {
+                return this.db.products.reduce((total, product) => 
+                    total + product.sheets.reduce((sheetTotal, sheet) => 
+                        sheetTotal + sheet.pages.reduce((pageTotal, page) => 
+                            pageTotal + page.records.length, 0), 0), 0);
+            }
+        }
+
+        // Variabile globale
+        let manager;
+        const L = {
+            'ro': {
+                'app_title': 'Gestiune Depozit',
+                'products': 'Produse',
+                'sheets': 'Foi',
+                'pages': 'Pagini',
+                'records': 'Înregistrări',
+                'add_product': 'Adaugă Produs',
+                'product_name': 'Nume Produs',
+                'measure_unit': 'Unitate Măsură',
+                'search': 'Căutare',
+                'delete': 'Șterge',
+                'add_sheet': 'Adaugă Foaie',
+                'year': 'An',
+                'month': 'Lună',
+                'add_page': 'Adaugă Pagină',
+                'unit_price': 'Preț Unitar',
+                'initial_stock': 'Stoc Inițial',
+                'add_record': 'Adaugă Înregistrare',
+                'day': 'Zi',
+                'doc_id': 'ID Document',
+                'doc_type': 'Tip Document',
+                'input': 'Intrare',
+                'output': 'Ieșire',
+                'final_stock': 'Stoc Final',
+                'comment': 'Comentariu',
+                'download_pdf': 'Descarcă PDF',
+                'no_data': 'Nu există date',
+                'select_product': 'Selectează produs',
+                'select_sheet': 'Selectează foaie',
+                'select_page': 'Selectează pagină',
+                'confirm_delete': 'Confirmă ștergerea',
+                'cancel': 'Anulează',
+                'language': 'Limbă',
+                'months': ['','Ian','Feb','Mar','Apr','Mai','Iun','Iul','Aug','Sep','Oct','Nov','Dec'],
+                'full_months': ['', 'Ianuarie', 'Februarie', 'Martie', 'Aprilie', 'Mai', 'Iunie', 'Iulie', 'August', 'Septembrie', 'Octombrie', 'Noiembrie', 'Decembrie']
+            },
+            'en': {
+                'app_title': 'Warehouse Management',
+                'products': 'Products',
+                'sheets': 'Sheets',
+                'pages': 'Pages',
+                'records': 'Records',
+                'add_product': 'Add Product',
+                'product_name': 'Product Name',
+                'measure_unit': 'Measure Unit',
+                'search': 'Search',
+                'delete': 'Delete',
+                'add_sheet': 'Add Sheet',
+                'year': 'Year',
+                'month': 'Month',
+                'add_page': 'Add Page',
+                'unit_price': 'Unit Price',
+                'initial_stock': 'Initial Stock',
+                'add_record': 'Add Record',
+                'day': 'Day',
+                'doc_id': 'Document ID',
+                'doc_type': 'Document Type',
+                'input': 'Input',
+                'output': 'Output',
+                'final_stock': 'Final Stock',
+                'comment': 'Comment',
+                'download_pdf': 'Download PDF',
+                'no_data': 'No data available',
+                'select_product': 'Select product',
+                'select_sheet': 'Select sheet',
+                'select_page': 'Select page',
+                'confirm_delete': 'Confirm delete',
+                'cancel': 'Cancel',
+                'language': 'Language',
+                'months': ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+                'full_months': ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+            }
+        };
+
+        let currentLang = 'ro';
+
+        // Funcții pentru generarea PDF-urilor
+        function generatePDF(data, headers, title, filename) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Add title
+            doc.setFontSize(16);
+            doc.text(title, 14, 15);
+            
+            // Add table
+            doc.autoTable({
+                head: [headers],
+                body: data,
+                startY: 25,
+                theme: 'grid',
+                styles: { fontSize: 9 },
+                headStyles: { fillColor: [78, 115, 223] }
+            });
+            
+            // Save the PDF
+            doc.save(filename);
+        }
+
+        // Funcții pentru afișarea datelor
+        function updateStats() {
+            document.getElementById('products-count').textContent = manager.getProductsCount();
+            document.getElementById('sheets-count').textContent = manager.getSheetsCount();
+            document.getElementById('pages-count').textContent = manager.getPagesCount();
+            document.getElementById('records-count').textContent = manager.getRecordsCount();
+        }
+
+        function populateProductSelects() {
+            const productSelects = [
+                'sheet-product-select',
+                'page-product-select',
+                'record-product-select'
+            ];
+            
+            productSelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                const currentValue = select.value;
+                select.innerHTML = '<option value="">' + L[currentLang]['select_product'] + '</option>';
+                
+                manager.db.products.forEach((product, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = product.name;
+                    select.appendChild(option);
+                });
+                
+                if (currentValue) {
+                    select.value = currentValue;
+                }
+            });
+        }
+
+        function populateSheetSelects() {
+            const sheetSelects = [
+                'page-sheet-select',
+                'record-sheet-select'
+            ];
+            
+            const productSelect = document.getElementById('page-product-select');
+            const productIdx = productSelect.value;
+            
+            if (productIdx) {
+                const product = manager.db.products[productIdx];
+                
+                sheetSelects.forEach(selectId => {
+                    const select = document.getElementById(selectId);
+                    const currentValue = select.value;
+                    select.innerHTML = '<option value="">' + L[currentLang]['select_sheet'] + '</option>';
+                    
+                    product.sheets.forEach((sheet, index) => {
+                        const option = document.createElement('option');
+                        option.value = index;
+                        option.textContent = `${sheet.year} - ${L[currentLang]['full_months'][sheet.month]}`;
+                        select.appendChild(option);
+                    });
+                    
+                    if (currentValue) {
+                        select.value = currentValue;
+                    }
+                });
+            } else {
+                sheetSelects.forEach(selectId => {
+                    const select = document.getElementById(selectId);
+                    select.innerHTML = '<option value="">' + L[currentLang]['select_sheet'] + '</option>';
+                });
+            }
+        }
+
+        function populatePageSelect() {
+            const pageSelect = document.getElementById('record-page-select');
+            const productSelect = document.getElementById('record-product-select');
+            const sheetSelect = document.getElementById('record-sheet-select');
+            
+            const productIdx = productSelect.value;
+            const sheetIdx = sheetSelect.value;
+            
+            if (productIdx && sheetIdx) {
+                const product = manager.db.products[productIdx];
+                const sheet = product.sheets[sheetIdx];
+                
+                const currentValue = pageSelect.value;
+                pageSelect.innerHTML = '<option value="">' + L[currentLang]['select_page'] + '</option>';
+                
+                sheet.pages.forEach((page, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = `Pagina ${index + 1} (Preț: ${page.unit_price})`;
+                    pageSelect.appendChild(option);
+                });
+                
+                if (currentValue) {
+                    pageSelect.value = currentValue;
+                }
+            } else {
+                pageSelect.innerHTML = '<option value="">' + L[currentLang]['select_page'] + '</option>';
+            }
+        }
+
+        function displayProducts() {
+            const searchPattern = document.getElementById('product-search').value;
+            let productsToShow;
+            
+            if (searchPattern) {
+                productsToShow = manager.searchProducts(searchPattern);
+            } else {
+                productsToShow = manager.db.products.map((product, index) => ({ index, product }));
+            }
+            
+            const tableBody = document.getElementById('products-table-body');
+            tableBody.innerHTML = '';
+            
+            if (productsToShow.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="4" class="text-center">${L[currentLang]['no_data']}</td>`;
+                tableBody.appendChild(row);
+            } else {
+                productsToShow.forEach(({ index, product }) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${product.name}</td>
+                        <td>${product.measure_unit}</td>
+                        <td>${product.sheets.length}</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger delete-product" data-index="${index}">
+                                <i class="fas fa-trash"></i> ${L[currentLang]['delete']}
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+                
+                // Add event listeners for delete buttons
+                document.querySelectorAll('.delete-product').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const index = parseInt(this.getAttribute('data-index'));
+                        handleDeleteConfirmation(
+                            'product',
+                            index,
+                            manager.db.products[index].name,
+                            () => manager.deleteProduct(index)
+                        );
+                    });
+                });
+            }
+        }
+
+        function displaySheets() {
+            const productSelect = document.getElementById('sheet-product-select');
+            const productIdx = productSelect.value;
+            const tableBody = document.getElementById('sheets-table-body');
+            tableBody.innerHTML = '';
+            
+            if (productIdx === '') {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="4" class="text-center">${L[currentLang]['select_product']}</td>`;
+                tableBody.appendChild(row);
+                return;
+            }
+            
+            const product = manager.db.products[productIdx];
+            
+            if (product.sheets.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="4" class="text-center">${L[currentLang]['no_data']}</td>`;
+                tableBody.appendChild(row);
+            } else {
+                product.sheets.forEach((sheet, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${sheet.year}</td>
+                        <td>${L[currentLang]['full_months'][sheet.month]}</td>
+                        <td>${sheet.pages.length}</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger delete-sheet" data-product-index="${productIdx}" data-sheet-index="${index}">
+                                <i class="fas fa-trash"></i> ${L[currentLang]['delete']}
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+                
+                // Add event listeners for delete buttons
+                document.querySelectorAll('.delete-sheet').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const productIdx = parseInt(this.getAttribute('data-product-index'));
+                        const sheetIdx = parseInt(this.getAttribute('data-sheet-index'));
+                        const sheet = manager.db.products[productIdx].sheets[sheetIdx];
+                        const sheetName = `${sheet.year} - ${L[currentLang]['full_months'][sheet.month]}`;
+                        
+                        handleDeleteConfirmation(
+                            'sheet',
+                            `${productIdx}_${sheetIdx}`,
+                            sheetName,
+                            () => manager.deleteSheet(productIdx, sheetIdx)
+                        );
+                    });
+                });
+            }
+        }
+
+        function displayPages() {
+            const productSelect = document.getElementById('page-product-select');
+            const sheetSelect = document.getElementById('page-sheet-select');
+            const productIdx = productSelect.value;
+            const sheetIdx = sheetSelect.value;
+            const tableBody = document.getElementById('pages-table-body');
+            tableBody.innerHTML = '';
+            
+            if (productIdx === '' || sheetIdx === '') {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="5" class="text-center">${L[currentLang]['select_product']} și ${L[currentLang]['select_sheet']}</td>`;
+                tableBody.appendChild(row);
+                return;
+            }
+            
+            const product = manager.db.products[productIdx];
+            const sheet = product.sheets[sheetIdx];
+            
+            if (sheet.pages.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="5" class="text-center">${L[currentLang]['no_data']}</td>`;
+                tableBody.appendChild(row);
+            } else {
+                sheet.pages.forEach((page, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${page.unit_price}</td>
+                        <td>${page.initial_stock}</td>
+                        <td>${page.records.length}</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger delete-page" data-product-index="${productIdx}" data-sheet-index="${sheetIdx}" data-page-index="${index}">
+                                <i class="fas fa-trash"></i> ${L[currentLang]['delete']}
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+                
+                // Add event listeners for delete buttons
+                document.querySelectorAll('.delete-page').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const productIdx = parseInt(this.getAttribute('data-product-index'));
+                        const sheetIdx = parseInt(this.getAttribute('data-sheet-index'));
+                        const pageIdx = parseInt(this.getAttribute('data-page-index'));
+                        const page = manager.db.products[productIdx].sheets[sheetIdx].pages[pageIdx];
+                        
+                        handleDeleteConfirmation(
+                            'page',
+                            `${productIdx}_${sheetIdx}_${pageIdx}`,
+                            `Pagina ${pageIdx + 1}`,
+                            () => manager.deletePage(productIdx, sheetIdx, pageIdx)
+                        );
+                    });
+                });
+            }
+        }
+
+        function displayRecords() {
+            const productSelect = document.getElementById('record-product-select');
+            const sheetSelect = document.getElementById('record-sheet-select');
+            const pageSelect = document.getElementById('record-page-select');
+            const productIdx = productSelect.value;
+            const sheetIdx = sheetSelect.value;
+            const pageIdx = pageSelect.value;
+            const tableBody = document.getElementById('records-table-body');
+            tableBody.innerHTML = '';
+            
+            if (productIdx === '' || sheetIdx === '' || pageIdx === '') {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="9" class="text-center">${L[currentLang]['select_product']}, ${L[currentLang]['select_sheet']} și ${L[currentLang]['select_page']}</td>`;
+                tableBody.appendChild(row);
+                return;
+            }
+            
+            const product = manager.db.products[productIdx];
+            const sheet = product.sheets[sheetIdx];
+            const page = sheet.pages[pageIdx];
+            
+            if (page.records.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="9" class="text-center">${L[currentLang]['no_data']}</td>`;
+                tableBody.appendChild(row);
+            } else {
+                page.records.forEach((record, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${record.day}</td>
+                        <td>${record.doc_id}</td>
+                        <td>${record.doc_type}</td>
+                        <td>${record.initial_stock}</td>
+                        <td>${record.input}</td>
+                        <td>${record.output}</td>
+                        <td>${record.final_stock}</td>
+                        <td>${record.comment}</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger delete-record" data-product-index="${productIdx}" data-sheet-index="${sheetIdx}" data-page-index="${pageIdx}" data-record-index="${index}">
+                                <i class="fas fa-trash"></i> ${L[currentLang]['delete']}
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+                
+                // Add event listeners for delete buttons
+                document.querySelectorAll('.delete-record').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const productIdx = parseInt(this.getAttribute('data-product-index'));
+                        const sheetIdx = parseInt(this.getAttribute('data-sheet-index'));
+                        const pageIdx = parseInt(this.getAttribute('data-page-index'));
+                        const recordIdx = parseInt(this.getAttribute('data-record-index'));
+                        const record = manager.db.products[productIdx].sheets[sheetIdx].pages[pageIdx].records[recordIdx];
+                        
+                        handleDeleteConfirmation(
+                            'record',
+                            `${productIdx}_${sheetIdx}_${pageIdx}_${recordIdx}`,
+                            `${record.doc_id} (${record.day})`,
+                            () => manager.deleteRecord(productIdx, sheetIdx, pageIdx, recordIdx)
+                        );
+                    });
+                });
+            }
+        }
+
+        function handleDeleteConfirmation(itemType, itemId, itemName, deleteFunction) {
+            // Check if this item is already pending deletion
+            const pendingDeletes = JSON.parse(sessionStorage.getItem('pending_deletes') || '{}');
+            
+            if (pendingDeletes[`${itemType}_${itemId}`]) {
+                // Show confirmation dialog
+                if (confirm(`${L[currentLang]['confirm_delete']}: ${itemName}?`)) {
+                    deleteFunction();
+                    // Remove from pending deletes
+                    delete pendingDeletes[`${itemType}_${itemId}`];
+                    sessionStorage.setItem('pending_deletes', JSON.stringify(pendingDeletes));
+                    refreshAllData();
+                } else {
+                    // Remove from pending deletes if canceled
+                    delete pendingDeletes[`${itemType}_${itemId}`];
+                    sessionStorage.setItem('pending_deletes', JSON.stringify(pendingDeletes));
+                }
+            } else {
+                // Add to pending deletes and show delete button again
+                pendingDeletes[`${itemType}_${itemId}`] = true;
+                sessionStorage.setItem('pending_deletes', JSON.stringify(pendingDeletes));
+                refreshAllData();
+            }
+        }
+
+        function refreshAllData() {
+            updateStats();
+            populateProductSelects();
+            populateSheetSelects();
+            populatePageSelect();
+            displayProducts();
+            displaySheets();
+            displayPages();
+            displayRecords();
+        }
+
+        // Inițializare aplicație
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize manager
+            manager = new WarehouseManager();
+            manager.attach(refreshAllData);
+            
+            // Set current year as default
+            const currentYear = new Date().getFullYear();
+            document.getElementById('sheet-year').value = currentYear;
+            
+            // Set current day as default
+            const currentDay = new Date().getDate();
+            document.getElementById('record-day').value = currentDay;
+            
+            // Initial data load
+            refreshAllData();
+            
+            // Event listeners for language change
+            document.getElementById('language-selector').addEventListener('change', function() {
+                currentLang = this.value;
+                // Update UI texts based on selected language
+                updateUITexts();
+                refreshAllData();
+            });
+            
+            // Event listeners for product selection changes
+            document.getElementById('sheet-product-select').addEventListener('change', displaySheets);
+            document.getElementById('page-product-select').addEventListener('change', function() {
+                populateSheetSelects();
+                displayPages();
+            });
+            document.getElementById('record-product-select').addEventListener('change', function() {
+                populateSheetSelects();
+                populatePageSelect();
+                displayRecords();
+            });
+            
+            // Event listeners for sheet selection changes
+            document.getElementById('page-sheet-select').addEventListener('change', displayPages);
+            document.getElementById('record-sheet-select').addEventListener('change', function() {
+                populatePageSelect();
+                displayRecords();
+            });
+            
+            // Event listener for page selection change
+            document.getElementById('record-page-select').addEventListener('change', displayRecords);
+            
+            // Event listener for product search
+            document.getElementById('product-search').addEventListener('input', displayProducts);
+            
+            // Event listeners for add buttons
+            document.getElementById('add-product-btn').addEventListener('click', function() {
+                const name = document.getElementById('product-name').value.trim();
+                const unit = document.getElementById('measure-unit').value.trim();
+                
+                if (name && unit) {
+                    manager.addProduct(name, unit);
+                    document.getElementById('product-name').value = '';
+                    document.getElementById('measure-unit').value = '';
+                    refreshAllData();
+                } else {
+                    alert('Te rog completează numele produsului și unitatea de măsură.');
+                }
+            });
+            
+            document.getElementById('add-sheet-btn').addEventListener('click', function() {
+                const productSelect = document.getElementById('sheet-product-select');
+                const year = document.getElementById('sheet-year').value;
+                const monthSelect = document.getElementById('sheet-month');
+                const month = monthSelect.value;
+                
+                if (productSelect.value === '') {
+                    alert('Te rog selectează un produs.');
+                    return;
+                }
+                
+                if (!year || !month) {
+                    alert('Te rog completează anul și luna.');
+                    return;
+                }
+                
+                manager.addSheet(parseInt(productSelect.value), parseInt(year), parseInt(month));
+                document.getElementById('sheet-year').value = currentYear;
+                monthSelect.value = '';
+                refreshAllData();
+            });
+            
+            document.getElementById('add-page-btn').addEventListener('click', function() {
+                const productSelect = document.getElementById('page-product-select');
+                const sheetSelect = document.getElementById('page-sheet-select');
+                const unitPrice = document.getElementById('page-unit-price').value;
+                const initialStock = document.getElementById('page-initial-stock').value;
+                
+                if (productSelect.value === '' || sheetSelect.value === '') {
+                    alert('Te rog selectează un produs și o foaie.');
+                    return;
+                }
+                
+                if (!unitPrice || !initialStock) {
+                    alert('Te rog completează prețul unitar și stocul inițial.');
+                    return;
+                }
+                
+                manager.addPage(
+                    parseInt(productSelect.value),
+                    parseInt(sheetSelect.value),
+                    parseFloat(unitPrice),
+                    parseFloat(initialStock)
+                );
+                
+                document.getElementById('page-unit-price').value = '';
+                document.getElementById('page-initial-stock').value = '';
+                refreshAllData();
+            });
+            
+            document.getElementById('add-record-btn').addEventListener('click', function() {
+                const productSelect = document.getElementById('record-product-select');
+                const sheetSelect = document.getElementById('record-sheet-select');
+                const pageSelect = document.getElementById('record-page-select');
+                const day = document.getElementById('record-day').value;
+                const docId = document.getElementById('record-doc-id').value.trim();
+                const docType = document.getElementById('record-doc-type').value.trim();
+                const inputVal = document.getElementById('record-input').value;
+                const outputVal = document.getElementById('record-output').value;
+                const comment = document.getElementById('record-comment').value.trim();
+                
+                if (productSelect.value === '' || sheetSelect.value === '' || pageSelect.value === '') {
+                    alert('Te rog selectează un produs, o foaie și o pagină.');
+                    return;
+                }
+                
+                if (!day || !docId || !docType) {
+                    alert('Te rog completează ziua, ID-ul documentului și tipul documentului.');
+                    return;
+                }
+                
+                const record = new Record(
+                    parseInt(day),
+                    docId,
+                    docType,
+                    parseFloat(inputVal || 0),
+                    parseFloat(outputVal || 0),
+                    comment
+                );
+                
+                manager.addRecord(
+                    parseInt(productSelect.value),
+                    parseInt(sheetSelect.value),
+                    parseInt(pageSelect.value),
+                    record
+                );
+                
+                document.getElementById('record-doc-id').value = '';
+                document.getElementById('record-doc-type').value = '';
+                document.getElementById('record-input').value = '';
+                document.getElementById('record-output').value = '';
+                document.getElementById('record-comment').value = '';
+                refreshAllData();
+            });
+            
+            // Event listeners for PDF download buttons
+            document.getElementById('download-products-pdf').addEventListener('click', function() {
+                const headers = [
+                    L[currentLang]['product_name'],
+                    L[currentLang]['measure_unit'],
+                    L[currentLang]['sheets']
+                ];
+                
+                const data = manager.db.products.map(product => [
+                    product.name,
+                    product.measure_unit,
+                    product.sheets.length.toString()
+                ]);
+                
+                generatePDF(data, headers, L[currentLang]['products'], `produse_${new Date().toISOString().slice(0, 10)}.pdf`);
+            });
+            
+            document.getElementById('download-sheets-pdf').addEventListener('click', function() {
+                const productSelect = document.getElementById('sheet-product-select');
+                if (productSelect.value === '') {
+                    alert('Te rog selectează un produs.');
+                    return;
+                }
+                
+                const product = manager.db.products[productSelect.value];
+                const headers = [
+                    L[currentLang]['year'],
+                    L[currentLang]['month'],
+                    L[currentLang]['pages']
+                ];
+                
+                const data = product.sheets.map(sheet => [
+                    sheet.year.toString(),
+                    L[currentLang]['full_months'][sheet.month],
+                    sheet.pages.length.toString()
+                ]);
+                
+                generatePDF(data, headers, `${L[currentLang]['sheets']} - ${product.name}`, `foi_${product.name}_${new Date().toISOString().slice(0, 10)}.pdf`);
+            });
+            
+            document.getElementById('download-pages-pdf').addEventListener('click', function() {
+                const productSelect = document.getElementById('page-product-select');
+                const sheetSelect = document.getElementById('page-sheet-select');
+                
+                if (productSelect.value === '' || sheetSelect.value === '') {
+                    alert('Te rog selectează un produs și o foaie.');
+                    return;
+                }
+                
+                const product = manager.db.products[productSelect.value];
+                const sheet = product.sheets[sheetSelect.value];
+                
+                const headers = [
+                    'ID',
+                    L[currentLang]['unit_price'],
+                    L[currentLang]['initial_stock'],
+                    L[currentLang]['records']
+                ];
+                
+                const data = sheet.pages.map((page, index) => [
+                    (index + 1).toString(),
+                    page.unit_price.toString(),
+                    page.initial_stock.toString(),
+                    page.records.length.toString()
+                ]);
+                
+                generatePDF(data, headers, `${L[currentLang]['pages']} - ${product.name} - ${sheet.year}-${L[currentLang]['full_months'][sheet.month]}`, `pagini_${product.name}_${sheet.year}-${sheet.month}_${new Date().toISOString().slice(0, 10)}.pdf`);
+            });
+            
+            document.getElementById('download-records-pdf').addEventListener('click', function() {
+                const productSelect = document.getElementById('record-product-select');
+                const sheetSelect = document.getElementById('record-sheet-select');
+                const pageSelect = document.getElementById('record-page-select');
+                
+                if (productSelect.value === '' || sheetSelect.value === '' || pageSelect.value === '') {
+                    alert('Te rog selectează un produs, o foaie și o pagină.');
+                    return;
+                }
+                
+                const product = manager.db.products[productSelect.value];
+                const sheet = product.sheets[sheetSelect.value];
+                const page = sheet.pages[pageSelect.value];
+                
+                const headers = [
+                    L[currentLang]['day'],
+                    L[currentLang]['doc_id'],
+                    L[currentLang]['doc_type'],
+                    L[currentLang]['initial_stock'],
+                    L[currentLang]['input'],
+                    L[currentLang]['output'],
+                    L[currentLang]['final_stock'],
+                    L[currentLang]['comment']
+                ];
+                
+                const data = page.records.map(record => [
+                    record.day.toString(),
+                    record.doc_id,
+                    record.doc_type,
+                    record.initial_stock.toString(),
+                    record.input.toString(),
+                    record.output.toString(),
+                    record.final_stock.toString(),
+                    record.comment
+                ]);
+                
+                generatePDF(data, headers, `${L[currentLang]['records']} - ${product.name} - ${sheet.year}-${L[currentLang]['full_months'][sheet.month]} - Pagina ${parseInt(pageSelect.value) + 1}`, `inregistrari_${product.name}_${sheet.year}-${sheet.month}_p${parseInt(pageSelect.value) + 1}_${new Date().toISOString().slice(0, 10)}.pdf`);
+            });
+        });
+
+        function updateUITexts() {
+            // Update navbar
+            document.querySelector('.navbar-brand').innerHTML = `<i class="fas fa-warehouse me-2"></i>${L[currentLang]['app_title']}`;
+            
+            // Update tab texts
+            document.getElementById('products-tab').textContent = L[currentLang]['products'];
+            document.getElementById('sheets-tab').textContent = L[currentLang]['sheets'];
+            document.getElementById('pages-tab').textContent = L[currentLang]['pages'];
+            document.getElementById('records-tab').textContent = L[currentLang]['records'];
+            
+            // Update stats boxes
+            document.querySelectorAll('.stats-box.products div:last-child')[0].textContent = L[currentLang]['products'];
+            document.querySelectorAll('.stats-box.sheets div:last-child')[0].textContent = L[currentLang]['sheets'];
+            document.querySelectorAll('.stats-box.pages div:last-child')[0].textContent = L[currentLang]['pages'];
+            document.querySelectorAll('.stats-box.records div:last-child')[0].textContent = L[currentLang]['records'];
+            
+            // Update card headers
+            const cards = document.querySelectorAll('.card-header');
+            cards[0].innerHTML = `<i class="fas fa-search me-2"></i>${L[currentLang]['search']}`;
+            cards[1].innerHTML = `<i class="fas fa-plus-circle me-2"></i>${L[currentLang]['add_product']}`;
+            cards[2].innerHTML = `<i class="fas fa-boxes me-2"></i>${L[currentLang]['products']}`;
+            cards[3].innerHTML = `<i class="fas fa-tasks me-2"></i>${L[currentLang]['select_product']}`;
+            cards[4].innerHTML = `<i class="fas fa-plus-circle me-2"></i>${L[currentLang]['add_sheet']}`;
+            cards[5].innerHTML = `<i class="fas fa-file-alt me-2"></i>${L[currentLang]['sheets']}`;
+            cards[6].innerHTML = `<i class="fas fa-tasks me-2"></i>${L[currentLang]['select_product']} ${L[currentLang]['select_sheet']}`;
+            cards[7].innerHTML = `<i class="fas fa-plus-circle me-2"></i>${L[currentLang]['add_page']}`;
+            cards[8].innerHTML = `<i class="fas fa-file me-2"></i>${L[currentLang]['pages']}`;
+            cards[9].innerHTML = `<i class="fas fa-tasks me-2"></i>${L[currentLang]['select_product']} ${L[currentLang]['select_sheet']} ${L[currentLang]['select_page']}`;
+            cards[10].innerHTML = `<i class="fas fa-plus-circle me-2"></i>${L[currentLang]['add_record']}`;
+            cards[11].innerHTML = `<i class="fas fa-list-alt me-2"></i>${L[currentLang]['records']}`;
+            
+            // Update placeholders
+            document.getElementById('product-search').placeholder = L[currentLang]['search'];
+            document.getElementById('product-name').placeholder = L[currentLang]['product_name'];
+            document.getElementById('measure-unit').placeholder = L[currentLang]['measure_unit'];
+            document.getElementById('sheet-year').placeholder = L[currentLang]['year'];
+            document.getElementById('page-unit-price').placeholder = L[currentLang]['unit_price'];
+            document.getElementById('page-initial-stock').placeholder = L[currentLang]['initial_stock'];
+            document.getElementById('record-day').placeholder = L[currentLang]['day'];
+            document.getElementById('record-doc-id').placeholder = L[currentLang]['doc_id'];
+            document.getElementById('record-doc-type').placeholder = L[currentLang]['doc_type'];
+            document.getElementById('record-input').placeholder = L[currentLang]['input'];
+            document.getElementById('record-output').placeholder = L[currentLang]['output'];
+            document.getElementById('record-comment').placeholder = L[currentLang]['comment'];
+            
+            // Update select options
+            document.getElementById('sheet-month').querySelector('option').textContent = L[currentLang]['month'];
+            
+            const productSelects = [
+                'sheet-product-select',
+                'page-product-select',
+                'record-product-select'
+            ];
+            
+            productSelects.forEach(id => {
+                const select = document.getElementById(id);
+                if (select.firstElementChild) {
+                    select.firstElementChild.textContent = L[currentLang]['select_product'];
+                }
+            });
+            
+            const sheetSelects = [
+                'page-sheet-select',
+                'record-sheet-select'
+            ];
+            
+            sheetSelects.forEach(id => {
+                const select = document.getElementById(id);
+                if (select.firstElementChild) {
+                    select.firstElementChild.textContent = L[currentLang]['select_sheet'];
+                }
+            });
+            
+            const pageSelect = document.getElementById('record-page-select');
+            if (pageSelect.firstElementChild) {
+                pageSelect.firstElementChild.textContent = L[currentLang]['select_page'];
+            }
+            
+            // Update buttons
+            document.getElementById('add-product-btn').innerHTML = `<i class="fas fa-plus me-1"></i> ${L[currentLang]['add_product']}`;
+            document.getElementById('add-sheet-btn').innerHTML = `<i class="fas fa-plus me-1"></i> ${L[currentLang]['add_sheet']}`;
+            document.getElementById('add-page-btn').innerHTML = `<i class="fas fa-plus me-1"></i> ${L[currentLang]['add_page']}`;
+            document.getElementById('add-record-btn').innerHTML = `<i class="fas fa-plus me-1"></i> ${L[currentLang]['add_record']}`;
+            
+            const downloadButtons = [
+                'download-products-pdf',
+                'download-sheets-pdf',
+                'download-pages-pdf',
+                'download-records-pdf'
+            ];
+            
+            downloadButtons.forEach(id => {
+                const button = document.getElementById(id);
+                button.innerHTML = `<i class="fas fa-download me-1"></i> ${L[currentLang]['download_pdf']}`;
+            });
+            
+            // Update table headers
+            const productsHeaders = document.querySelectorAll('#products-table-body').previousElementSibling.querySelectorAll('th');
+            if (productsHeaders.length >= 3) {
+                productsHeaders[0].textContent = L[currentLang]['product_name'];
+                productsHeaders[1].textContent = L[currentLang]['measure_unit'];
+                productsHeaders[2].textContent = L[currentLang]['sheets'];
+            }
+            
+            const sheetsHeaders = document.querySelectorAll('#sheets-table-body').previousElementSibling.querySelectorAll('th');
+            if (sheetsHeaders.length >= 3) {
+                sheetsHeaders[0].textContent = L[currentLang]['year'];
+                sheetsHeaders[1].textContent = L[currentLang]['month'];
+                sheetsHeaders[2].textContent = L[currentLang]['pages'];
+            }
+            
+            const pagesHeaders = document.querySelectorAll('#pages-table-body').previousElementSibling.querySelectorAll('th');
+            if (pagesHeaders.length >= 4) {
+                pagesHeaders[1].textContent = L[currentLang]['unit_price'];
+                pagesHeaders[2].textContent = L[currentLang]['initial_stock'];
+                pagesHeaders[3].textContent = L[currentLang]['records'];
+            }
+            
+            const recordsHeaders = document.querySelectorAll('#records-table-body').previousElementSibling.querySelectorAll('th');
+            if (recordsHeaders.length >= 8) {
+                recordsHeaders[0].textContent = L[currentLang]['day'];
+                recordsHeaders[1].textContent = L[currentLang]['doc_id'];
+                recordsHeaders[2].textContent = L[currentLang]['doc_type'];
+                recordsHeaders[3].textContent = L[currentLang]['initial_stock'];
+                recordsHeaders[4].textContent = L[currentLang]['input'];
+                recordsHeaders[5].textContent = L[currentLang]['output'];
+                recordsHeaders[6].textContent = L[currentLang]['final_stock'];
+                recordsHeaders[7].textContent = L[currentLang]['comment'];
+            }
+        }
+    </script>
 </body>
 </html>

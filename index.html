@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<title>Gestiune Depozit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body { font-family: sans-serif; margin: 1em; }
+nav button { margin: 0.2em; }
+.hidden { display: none; }
+table { border-collapse: collapse; width: 100%; margin-top: 1em; }
+th, td { border: 1px solid #999; padding: 0.4em; text-align: center; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+<h1>📦 Gestiune Depozit</h1>
+
+<nav>
+  <button onclick="showTab('products')">Produse</button>
+  <button onclick="showTab('sheets')">Fișe</button>
+  <button onclick="showTab('pages')">Pagini</button>
+  <button onclick="showTab('records')">Înregistrări</button>
+</nav>
+
+<div id="products" class="tab"></div>
+<div id="sheets" class="tab hidden"></div>
+<div id="pages" class="tab hidden"></div>
+<div id="records" class="tab hidden"></div>
+
+<script>
+let db=JSON.parse(localStorage.getItem('warehouseDB')||'{"products":[]}');
+let selectedProduct=-1,selectedSheet=-1,selectedPage=-1;
+function saveDB(){ localStorage.setItem('warehouseDB',JSON.stringify(db)); }
+function showTab(id){ document.querySelectorAll('.tab').forEach(t=>t.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); render(); }
+
+function addProduct(){
+  const n=document.getElementById('prodName').value.trim();
+  const u=document.getElementById('prodUnit').value.trim();
+  if(n&&u){ db.products.push({name:n,measure_unit:u,sheets:[]}); saveDB(); render(); }
+}
+function deleteProduct(i){ if(confirm("Ștergi produsul?")){ db.products.splice(i,1); saveDB(); render(); } }
+function exportPDF(){
+  const { jsPDF }=window.jspdf; const doc=new jsPDF();
+  doc.text("Produse",10,10); db.products.forEach((p,i)=>doc.text(`${i+1}. ${p.name} (${p.measure_unit})`,10,20+10*i));
+  doc.save("produse.pdf");
+}
+function renderProducts(){
+  let h=`<h2>Produse</h2>
+  <input id="prodName" placeholder="Nume produs">
+  <input id="prodUnit" placeholder="Unitate măsură">
+  <button onclick="addProduct()">Adaugă Produs</button>
+  <button onclick="exportPDF()">Descarcă PDF</button>`;
+  if(db.products.length){
+    h+=`<table><tr><th>#</th><th>Nume</th><th>Unitate</th><th>Fișe</th><th>Șterge</th></tr>`;
+    db.products.forEach((p,i)=>h+=`<tr><td>${i+1}</td><td>${p.name}</td><td>${p.measure_unit}</td>
+      <td><button onclick="selectProduct(${i})">Fișe</button></td>
+      <td><button onclick="deleteProduct(${i})">X</button></td></tr>`);
+    h+="</table>";
+  }
+  document.getElementById('products').innerHTML=h;
+}
+function selectProduct(i){ selectedProduct=i; showTab('sheets'); }
+
+function addSheet(){
+  const n=document.getElementById('sheetName').value.trim();
+  if(n&&selectedProduct>=0){ db.products[selectedProduct].sheets.push({name:n,pages:[]}); saveDB(); render(); }
+}
+function deleteSheet(i){ if(confirm("Ștergi fișa?")){ db.products[selectedProduct].sheets.splice(i,1); saveDB(); render(); } }
+function renderSheets(){
+  if(selectedProduct<0){ document.getElementById('sheets').innerHTML="<p>Selectează un produs.</p>"; return; }
+  const prod=db.products[selectedProduct];
+  let h=`<h2>Fișe pentru ${prod.name}</h2>
+  <input id="sheetName" placeholder="Nume fișă">
+  <button onclick="addSheet()">Adaugă Fișă</button>
+  <button onclick="showTab('products')">Înapoi la Produse</button>`;
+  if(prod.sheets.length){
+    h+=`<table><tr><th>#</th><th>Nume fișă</th><th>Pagini</th><th>Șterge</th></tr>`;
+    prod.sheets.forEach((s,i)=>h+=`<tr><td>${i+1}</td><td>${s.name}</td>
+      <td><button onclick="selectSheet(${i})">Pagini</button></td>
+      <td><button onclick="deleteSheet(${i})">X</button></td></tr>`);
+    h+="</table>";
+  }
+  document.getElementById('sheets').innerHTML=h;
+}
+function selectSheet(i){ selectedSheet=i; showTab('pages'); }
+
+function addPage(){
+  const n=document.getElementById('pageName').value.trim();
+  if(n&&selectedProduct>=0&&selectedSheet>=0){ db.products[selectedProduct].sheets[selectedSheet].pages.push({name:n,records:[]}); saveDB(); render(); }
+}
+function deletePage(i){ if(confirm("Ștergi pagina?")){ db.products[selectedProduct].sheets[selectedSheet].pages.splice(i,1); saveDB(); render(); } }
+function renderPages(){
+  if(selectedProduct<0||selectedSheet<0){ document.getElementById('pages').innerHTML="<p>Selectează o fișă.</p>"; return; }
+  const sheet=db.products[selectedProduct].sheets[selectedSheet];
+  let h=`<h2>Pagini pentru ${sheet.name}</h2>
+  <input id="pageName" placeholder="Nume pagină">
+  <button onclick="addPage()">Adaugă Pagină</button>
+  <button onclick="showTab('sheets')">Înapoi la Fișe</button>`;
+  if(sheet.pages.length){
+    h+=`<table><tr><th>#</th><th>Nume pagină</th><th>Înregistrări</th><th>Șterge</th></tr>`;
+    sheet.pages.forEach((p,i)=>h+=`<tr><td>${i+1}</td><td>${p.name}</td>
+      <td><button onclick="selectPage(${i})">Înregistrări</button></td>
+      <td><button onclick="deletePage(${i})">X</button></td></tr>`);
+    h+="</table>";
+  }
+  document.getElementById('pages').innerHTML=h;
+}
+function selectPage(i){ selectedPage=i; showTab('records'); }
+
+function addRecord(){
+  const d=document.getElementById('recDate').value;
+  const q=+document.getElementById('recQty').value;
+  const obs=document.getElementById('recObs').value;
+  if(d&&q&&selectedProduct>=0&&selectedSheet>=0&&selectedPage>=0){
+    db.products[selectedProduct].sheets[selectedSheet].pages[selectedPage].records.push({date:d,qty:q,obs}); saveDB(); render();
+  }
+}
+function deleteRecord(i){ if(confirm("Ștergi înregistrarea?")){ db.products[selectedProduct].sheets[selectedSheet].pages[selectedPage].records.splice(i,1); saveDB(); render(); } }
+function renderRecords(){
+  if(selectedProduct<0||selectedSheet<0||selectedPage<0){ document.getElementById('records').innerHTML="<p>Selectează o pagină.</p>"; return; }
+  const page=db.products[selectedProduct].sheets[selectedSheet].pages[selectedPage];
+  let h=`<h2>Înregistrări pentru ${page.name}</h2>
+  <input type="date" id="recDate">
+  <input type="number" id="recQty" placeholder="Cantitate">
+  <input id="recObs" placeholder="Observații">
+  <button onclick="addRecord()">Adaugă Înregistrare</button>
+  <button onclick="showTab('pages')">Înapoi la Pagini</button>`;
+  if(page.records.length){
+    h+=`<table><tr><th>#</th><th>Data</th><th>Cantitate</th><th>Obs</th><th>Șterge</th></tr>`;
+    page.records.forEach((r,i)=>h+=`<tr><td>${i+1}</td><td>${r.date}</td><td>${r.qty}</td><td>${r.obs}</td>
+      <td><button onclick="deleteRecord(${i})">X</button></td></tr>`);
+    h+="</table>";
+  }
+  document.getElementById('records').innerHTML=h;
+}
+
+function render(){
+  renderProducts(); renderSheets(); renderPages(); renderRecords();
+}
+render();
+</script>
+</body>
+</html>
